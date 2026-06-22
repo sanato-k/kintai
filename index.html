@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" sizes="180x180" href="data:image/png;base64,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">
+<meta name="apple-mobile-web-app-title" content="出勤簿">
+<title>出勤簿</title>
+<style>
+  :root{
+    --card:#ffffff; --text:#1a1f3a; --muted:#8a93b8; --line:#e3e7f3; --accent:#1b2545;
+    --in:#86efac; --in-on:#15803d; --out:#f9a8d4; --out-on:#db2777;
+    --early:#60a5fa; --early-on:#1d4ed8; --over:#fbbf24; --over-on:#b45309;
+    --send:#16a34a; --danger:#ef4444; --ok:#16a34a;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; font-family:-apple-system,"Hiragino Sans","Yu Gothic",sans-serif;
+        background:#eef1f8; color:var(--text); padding:14px 14px 96px; }
+  .topbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+  .topbar h1{ font-size:22px; margin:0; }
+  .clock{ text-align:right; } .clock .d{ font-size:13px; color:#5b639a; } .clock .t{ font-size:24px; font-weight:800; }
+  .topright{ display:flex; align-items:center; gap:12px; }
+  .power{ display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; }
+  .plabel{ font-size:11px; font-weight:800; color:#15803d; }
+  .power.off .plabel{ color:#94a3b8; }
+  .switch{ width:48px; height:27px; border-radius:14px; background:#22c55e; position:relative; transition:background .2s; }
+  .power.off .switch{ background:#cbd5e1; }
+  .switch::after{ content:""; position:absolute; top:3px; left:24px; width:21px; height:21px;
+        border-radius:50%; background:#fff; transition:left .2s; box-shadow:0 1px 3px rgba(0,0,0,.3); }
+  .power.off .switch::after{ left:3px; }
+  .datebar{ background:var(--accent); color:#fff; border-radius:12px; padding:12px;
+        text-align:center; font-weight:700; font-size:17px; margin-bottom:6px; display:flex;
+        align-items:center; justify-content:center; gap:8px; }
+  .datebar input{ background:transparent; border:none; color:#fff; font-size:17px; font-weight:700; }
+  .dnote{ text-align:center; font-size:12px; color:#5b639a; margin-bottom:8px; }
+  .dnote.behind{ color:var(--danger); font-weight:700; }
+  .nav{ display:flex; gap:8px; margin-bottom:12px; }
+  .navbtn{ flex:1; border:none; border-radius:12px; padding:12px 6px; font-weight:800; font-size:15px; line-height:1.2; }
+  .navbtn .sub{ display:block; font-size:10px; font-weight:600; opacity:.8; }
+  .navbtn.back{ background:#e2e8f0; color:#334155; flex:1; }
+  .navbtn.next{ background:var(--send); color:#fff; }
+  .navbtn.now{ background:var(--accent); color:#fff; flex:0 0 64px; }
+  .footbar{ position:fixed; left:0; right:0; bottom:0; padding:10px 14px;
+        padding-bottom:calc(10px + env(safe-area-inset-bottom));
+        background:#eef1f8; box-shadow:0 -2px 12px rgba(20,30,80,.10); z-index:50; }
+  .footbar .navbtn{ width:100%; }
+  .sec-head{ display:flex; justify-content:space-between; align-items:center; margin:10px 2px 8px; }
+  .sec-head .lbl{ color:#5b639a; font-weight:700; }
+  .mini{ border:none; border-radius:10px; padding:8px 14px; font-weight:700; font-size:14px; }
+  .mini.add{ background:#86efac; color:#14532d; } .mini.rm{ background:#fcd34d; color:#713f12; }
+  .emp{ background:var(--card); border:1px solid var(--line); border-radius:14px;
+        padding:8px; margin-bottom:8px; display:flex; align-items:stretch; gap:6px;
+        box-shadow:0 1px 3px rgba(20,30,80,.05); }
+  .name{ flex:0 0 120px; display:flex; align-items:center; justify-content:center;
+        font-weight:700; font-size:16px; padding:6px 4px; border-radius:10px; text-align:center;
+        touch-action:none; user-select:none; -webkit-user-select:none; }
+  .name.act{ background:var(--accent); color:#fff; }
+  .emp.dragging{ opacity:.9; transform:scale(1.02); box-shadow:0 8px 24px rgba(20,30,80,.25); position:relative; z-index:5; }
+  .emp.drag-target{ box-shadow:inset 0 0 0 2px var(--accent); }
+  .btn{ border:1px solid rgba(0,0,0,.12); border-radius:11px; padding:12px 2px;
+        font-weight:800; font-size:13px; color:#fff; }
+  .b-in{ flex:1.3; background:#22c55e; } .b-in.on{ background:#15803d; box-shadow:inset 0 0 0 2px #064e2b; }
+  .b-out{ flex:0.8; background:#ec4899; } .b-out.on{ background:#be185d; box-shadow:inset 0 0 0 2px #831843; }
+  .b-e{ flex:0.8; background:#3b82f6; } .b-e.has{ background:#1d4ed8; box-shadow:inset 0 0 0 2px #1e3a8a; }
+  .b-o{ flex:0.8; background:#f59e0b; color:#3a2a00; } .b-o.has{ background:#b45309; color:#fff; }
+  .badge{ font-size:11px; font-weight:700; display:block; }
+  .log{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:6px 12px; }
+  .logrow{ display:flex; align-items:center; gap:10px; padding:9px 2px; border-bottom:1px solid var(--line); }
+  .logrow:last-child{ border-bottom:none; }
+  .tag{ font-size:12px; font-weight:700; padding:3px 10px; border-radius:20px; }
+  .t-in{ background:#dcfce7; color:#15803d; } .t-out{ background:#fce7f3; color:#db2777; }
+  .t-e{ background:#dbeafe; color:#1d4ed8; } .t-o{ background:#fef3c7; color:#b45309; }
+  .logrow .nm{ font-weight:700; flex:1; } .logrow .tm{ color:var(--muted); font-size:13px; }
+  .logrow .x{ border:none; background:none; color:var(--muted); font-size:16px; }
+  textarea{ width:100%; border:1px solid var(--line); border-radius:12px; padding:12px; font-size:15px; min-height:54px; }
+  .send{ width:100%; border:none; border-radius:14px; padding:18px; font-size:18px; font-weight:800; color:#fff; margin-top:10px; }
+  .send.csv{ background:var(--accent); } .send.one{ background:var(--send); }
+  .hint{ text-align:center; color:#7c84ad; font-size:12px; margin-top:8px; }
+  .clr{ border:none; background:none; color:var(--danger); font-weight:700; }
+  /* 週間チェック */
+  .week{ background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+  .wrow{ display:flex; align-items:center; gap:12px; padding:13px 14px; border-bottom:1px solid var(--line); }
+  .wrow:last-child{ border-bottom:none; }
+  .wrow.today{ background:#eef4ff; }
+  .wrow .wd{ flex:1; font-weight:700; font-size:15px; }
+  .wrow .wsub{ color:var(--muted); font-size:12px; font-weight:400; margin-left:6px; }
+  .stat{ font-weight:800; font-size:15px; padding:6px 14px; border-radius:20px; min-width:92px; text-align:center; }
+  .stat.ok{ background:#dcfce7; color:#15803d; } .stat.no{ background:#fee2e2; color:#b91c1c; }
+  .wrow .wdel{ border:none; background:none; color:var(--muted); font-size:17px; padding:4px 6px; margin-left:4px; }
+  .wrow .sentbadge{ font-size:12px; font-weight:800; color:#1d4ed8; background:#dbeafe; padding:5px 10px; border-radius:20px; white-space:nowrap; }
+  /* 画面内モーダル（prompt/confirm代替） */
+  .modal-bg{ position:fixed; inset:0; background:rgba(15,18,38,.55); display:none;
+        align-items:center; justify-content:center; z-index:999; padding:24px; }
+  .modal{ background:#fff; border-radius:16px; padding:20px; width:100%; max-width:340px;
+        box-shadow:0 12px 40px rgba(0,0,0,.3); }
+  .modal .m-msg{ font-size:16px; font-weight:700; margin-bottom:14px; line-height:1.5; }
+  .modal input{ width:100%; font-size:18px; padding:12px; border:1px solid var(--line);
+        border-radius:10px; margin-bottom:14px; }
+  .m-btns{ display:flex; gap:10px; }
+  .m-btns button{ flex:1; border:none; border-radius:10px; padding:13px; font-size:16px; font-weight:800; }
+  .m-btns .m-ok{ background:var(--accent); color:#fff; } .m-btns .m-cancel{ background:#e2e8f0; color:#334155; }
+  .name.del{ background:#fee2e2; color:#b91c1c; }
+</style>
+</head>
+<body>
+  <div class="modal-bg" id="modal">
+    <div class="modal">
+      <div class="m-msg" id="m-msg"></div>
+      <input id="m-input" style="display:none;">
+      <div class="m-btns" id="m-btns"></div>
+    </div>
+  </div>
+
+  <div class="topbar">
+    <h1>📋 出勤簿</h1>
+    <div class="topright">
+      <div class="clock"><div class="d" id="cd"></div><div class="t" id="ct"></div></div>
+      <div class="power" id="power" onclick="togglePower()">
+        <span class="plabel" id="plabel">稼働</span>
+        <span class="switch"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="datebar" onclick="openPicker()">📅 <input type="date" id="wd" onchange="manualDate()"></div>
+  <div class="dnote" id="dnote"></div>
+  <div class="nav">
+    <button class="navbtn now" onclick="goToday()">今日</button>
+  </div>
+
+  <div class="sec-head">
+    <span class="lbl">従業員</span>
+    <span>
+      <button class="mini add" onclick="addEmp()">＋ 追加</button>
+      <button class="mini rm" id="rmbtn" onclick="rmEmp()">✏ 削除</button>
+    </span>
+  </div>
+  <div id="emps"></div>
+
+  <div class="sec-head"><span class="lbl">打刻ログ（この日）</span><button class="clr" onclick="clearDay()">この日を消す</button></div>
+  <div class="log" id="loglist"></div>
+
+  <div class="sec-head" style="margin-top:14px;"><span class="lbl">備考</span></div>
+  <textarea id="memo" placeholder="連絡事項・特記事項など..." oninput="saveMemo()"></textarea>
+
+  <p class="hint">「確定して送信 → 次へ」を押すと共有が開く → 「"ファイル"に保存」→ OneDrive →「給与」</p>
+
+  <div class="sec-head" style="margin-top:18px;"><span class="lbl">1週間のチェック（打った / 打ってない）</span></div>
+  <div class="week" id="week"></div>
+
+  <div class="footbar">
+    <button class="navbtn next" onclick="confirmNext()">確定して送信 → 次へ ▶</button>
+  </div>
+
+<script>
+const EK="kinmu_emps_v1", LK="kinmu_logs_v1", MK="kinmu_memo_v1", WKEY="kinmu_workdate_v1", PWR="kinmu_power_v1", SK="kinmu_sent_v1";
+const $=id=>document.getElementById(id);
+const DEF=["山田 太郎","鈴木 花子","田中 一郎","佐藤 美咲","伊藤 健二","渡辺 誠","中村 あい","小林 拓也","加藤 由美","松本 健"];
+const WD="日月火水木金土";
+let removeMode=false;
+
+const load=(k,d)=>{ try{return JSON.parse(localStorage.getItem(k))??d;}catch(e){return d;} };
+const set=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const emps=()=>load(EK,DEF);
+const logs=()=>load(LK,[]);
+const pad=n=>String(n).padStart(2,"0");
+const ymd=dt=>`${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}`;
+const today=()=>ymd(new Date());
+const addDays=(s,n)=>{ const d=new Date(s+"T00:00"); d.setDate(d.getDate()+n); return ymd(d); };
+const fmtD=s=>{ const[y,m,d]=s.split("-"); return `${parseInt(m)}/${parseInt(d)}`; };
+const wdOf=s=>WD[new Date(s+"T00:00").getDay()];
+const dayHasPunch=s=>logs().some(x=>x.date===s);
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const qcsv=s=>{ s=String(s==null?"":s); return /[",\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
+
+// ── 画面内モーダル（prompt/confirm/alert 代替。artifactでも動く） ──
+function closeModal(){ $("modal").style.display="none"; $("m-input").style.display="none"; $("m-btns").innerHTML=""; }
+function uiAlert(msg, cb){
+  $("m-msg").textContent=msg; $("m-input").style.display="none";
+  $("m-btns").innerHTML='<button class="m-ok">OK</button>'; $("modal").style.display="flex";
+  $("m-btns").querySelector(".m-ok").onclick=()=>{ closeModal(); cb&&cb(); };
+}
+function uiConfirm(msg, onYes){
+  $("m-msg").textContent=msg; $("m-input").style.display="none";
+  $("m-btns").innerHTML='<button class="m-cancel">いいえ</button><button class="m-ok">はい</button>';
+  $("modal").style.display="flex";
+  $("m-btns").querySelector(".m-ok").onclick=()=>{ closeModal(); onYes&&onYes(); };
+  $("m-btns").querySelector(".m-cancel").onclick=closeModal;
+}
+function uiPrompt(msg, def, onOk, isNum){
+  $("m-msg").textContent=msg;
+  const inp=$("m-input"); inp.style.display="block"; inp.value=def||""; inp.type=isNum?"number":"text";
+  $("m-btns").innerHTML='<button class="m-cancel">キャンセル</button><button class="m-ok">OK</button>';
+  $("modal").style.display="flex"; setTimeout(()=>{ try{inp.focus();}catch(e){} },50);
+  $("m-btns").querySelector(".m-ok").onclick=()=>{ const v=inp.value; closeModal(); onOk&&onOk(v); };
+  $("m-btns").querySelector(".m-cancel").onclick=closeModal;
+}
+
+// ── 作業日（workDate）ロジック ──
+// 日が変わっても、その日を打ってなければ日付は進まない＝そのまま。
+// 打ったら次の日（＝最終的に当日）へ進む。
+function workDate(){
+  let w=load(WKEY,null);
+  if(!w){ w=today(); set(WKEY,w); }
+  if(w>today()){ w=today(); set(WKEY,w); }  // 未来日は当日に丸める
+  return w;
+}
+function setWork(w){ set(WKEY,w); $("wd").value=w; }
+function manualDate(){ setWork($("wd").value); render(); }
+
+function punch(name,type,hours){
+  const n=new Date(); const time=`${pad(n.getHours())}:${pad(n.getMinutes())}`;
+  const w=workDate();
+  const arr=logs();
+  // 同じ日付・同じ氏名・同じ種別が既にあれば上書き（重複させない）
+  const i=arr.findIndex(x=>x.date===w && x.name===name && x.type===type);
+  const rec={date:w,time,name,type,hours:hours||"",ts:Date.now()};  // ts=押した順（点灯判定用）
+  if(i>=0) arr[i]=rec; else arr.unshift(rec);
+  set(LK,arr);
+  clearSent(w);   // この日を編集したので「送信済」を解除（再送が必要）
+  render();  // 自動では進まない。確定ボタンで次の日へ。
+}
+function speak(msg){ try{ const u=new SpeechSynthesisUtterance(msg); u.lang="ja-JP"; speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){} }
+function confirmNext(){
+  const w=workDate();
+  const go=()=>{ speak("送信しました"); exportCSV(true); if(dayHasPunch(w)) markSent(w); if(w<today()) setWork(addDays(w,1)); render(); };
+  if(!dayHasPunch(w)) uiConfirm(`${fmtD(w)} は打刻がありません。それでも確定して送信しますか？`, go);
+  else go();
+}
+function askHours(name,type){
+  uiPrompt(`${name} の${type}時間（h）`, "1", (h)=>{
+    const v=parseFloat(h); if(isNaN(v)||v<=0){ uiAlert("数値を入れてください"); return; }
+    punch(name,type,v);
+  }, true);
+}
+function lastInOut(name){
+  const w=workDate();
+  const cand=logs().filter(x=>x.date===w && x.name===name && (x.type==="出勤"||x.type==="早退"));
+  if(!cand.length) return null;
+  // 押した順(ts)で最後を採用。tsが無い旧データは時刻で補助。
+  cand.sort((a,b)=>((a.ts||0)-(b.ts||0)) || (a.time||"").localeCompare(b.time||""));
+  return cand[cand.length-1].type;
+}
+function hoursOf(name,type){
+  const w=workDate();
+  const l=logs().find(x=>x.date===w && x.name===name && x.type===type);
+  return l?l.hours:"";
+}
+function addEmp(){ uiPrompt("従業員名を入力","",(n)=>{ if(!n||!n.trim())return; const a=emps(); a.push(n.trim()); set(EK,a); render(); }); }
+function rmEmp(){ removeMode=!removeMode; render(); }
+function delEmp(name){ uiConfirm(`「${name}」を削除しますか？`, ()=>{ set(EK,emps().filter(e=>e!==name)); removeMode=false; render(); }); }
+function moveEmp(from,to){
+  const a=emps();
+  if(from===to||to<0||to>=a.length) return;
+  const [m]=a.splice(from,1);
+  a.splice(to,0,m);
+  set(EK,a);          // 既存と同じキーで永続化
+}
+function delLog(realIdx){ const a=logs(); const d=a[realIdx]&&a[realIdx].date; a.splice(realIdx,1); set(LK,a); if(d) clearSent(d); render(); }
+function clearDay(){ const w=workDate(); uiConfirm(`${fmtD(w)} の打刻を全部消しますか？`, ()=>{ set(LK,logs().filter(x=>x.date!==w)); clearSent(w); render(); }); }
+function saveMemo(){ const m=load(MK,{}); m[workDate()]=$("memo").value; set(MK,m); }
+function gotoDay(d){ setWork(d); render(); }
+function goToday(){ setWork(today()); render(); }
+// 稼働 ON / 休止 OFF スイッチ
+const isOn=()=>load(PWR,true);
+function renderPower(){ const on=isOn(); $("power").className="power"+(on?"":" off"); $("plabel").textContent=on?"稼働":"休止"; }
+function togglePower(){ set(PWR,!isOn()); renderPower(); render(); }
+// 送信済の管理（確定して送信した日付を記録。その日を編集したら解除＝再送が必要）
+const isSent=d=>load(SK,[]).includes(d);
+function markSent(d){ const s=load(SK,[]); if(!s.includes(d)){ s.push(d); set(SK,s); } }
+function clearSent(d){ set(SK, load(SK,[]).filter(x=>x!==d)); }
+// 週間チェックの1日分を削除
+function delDay(ev,d){ ev.stopPropagation(); uiConfirm(`${fmtD(d)} の打刻を削除しますか？`, ()=>{ set(LK, logs().filter(x=>x.date!==d)); clearSent(d); render(); }); }
+// 氏名は index で参照（名前に記号が入っても onclick が壊れない）
+function nameTap(i){
+  const n=emps()[i]; if(!n) return;
+  if(removeMode){ delEmp(n); return; }
+  const w=workDate();
+  if(logs().some(x=>x.date===w && x.name===n)){
+    // 既に打刻あり → もう一度タップでこの人の当日データを全リセット（色・ボタンも初期化）
+    set(LK, logs().filter(x=>!(x.date===w && x.name===n)));
+    clearSent(w);
+    render();
+  }else{
+    punch(n,"出勤");   // 初回タップ → 出勤
+  }
+}
+// ── 氏名の板：長押しドラッグで並び替え／素早いタップは従来の打刻 ──
+let drag=null;
+function nameDown(e,i){
+  if(e.button!=null && e.button!==0) return;        // 左ボタン/タッチのみ
+  const nameEl=e.currentTarget, emp=nameEl.closest('.emp');
+  drag={ i, nameEl, emp, pid:e.pointerId, startX:e.clientX, startY:e.clientY,
+         active:false, dead:false, longTimer:null, rows:null };
+  try{ nameEl.setPointerCapture(e.pointerId); }catch(_){}
+  drag.longTimer=setTimeout(startDrag,300);          // 300ms長押しでドラッグ開始
+  nameEl.addEventListener('pointermove',onMove);
+  nameEl.addEventListener('pointerup',onUp);
+  nameEl.addEventListener('pointercancel',onUp);
+}
+function startDrag(){
+  if(!drag||drag.dead||removeMode) return;           // 削除モード中はドラッグしない
+  drag.active=true;
+  drag.emp.classList.add('dragging');
+  drag.rows=[...document.querySelectorAll('#emps .emp')].map(el=>{
+    const r=el.getBoundingClientRect();
+    return {el, mid:r.top+r.height/2, top:r.top, bottom:r.bottom, idx:+el.dataset.emp};
+  });
+}
+function onMove(e){
+  if(!drag||drag.dead) return;
+  const dx=e.clientX-drag.startX, dy=e.clientY-drag.startY;
+  if(!drag.active){                                  // まだ長押し成立前
+    if(Math.abs(dx)>10||Math.abs(dy)>10){ clearTimeout(drag.longTimer); drag.dead=true; }
+    return;
+  }
+  e.preventDefault();
+  drag.emp.style.transform=`translateY(${dy}px) scale(1.02)`;
+  const y=e.clientY;
+  drag.rows.forEach(r=>r.el.classList.toggle('drag-target',
+        r.idx!==drag.i && y>=r.top && y<=r.bottom));
+}
+function computeTarget(d,y){                          // ドラッグ対象を除いた挿入位置
+  let idx=0;
+  for(const r of d.rows){ if(r.idx===d.i) continue; if(r.mid<y) idx++; }
+  return idx;
+}
+function onUp(e){
+  if(!drag) return;
+  clearTimeout(drag.longTimer);
+  const nameEl=drag.nameEl;
+  nameEl.removeEventListener('pointermove',onMove);
+  nameEl.removeEventListener('pointerup',onUp);
+  nameEl.removeEventListener('pointercancel',onUp);
+  try{ nameEl.releasePointerCapture(drag.pid); }catch(_){}
+  const d=drag; drag=null;
+  if(d.active){
+    const target=computeTarget(d,e.clientY);
+    d.emp.classList.remove('dragging'); d.emp.style.transform='';
+    moveEmp(d.i,target); render();
+  }else if(!d.dead){
+    nameTap(d.i);                                    // 素早いタップ＝従来の打刻/削除
+  }
+}
+function punchEmp(i,type){ const n=emps()[i]; if(n) punch(n,type); }
+function askHoursEmp(i,type){ const n=emps()[i]; if(n) askHours(n,type); }
+// 日付を選ぶ: タップ即カレンダーを開く（iOSはタップ同期でないとshowPickerが無効になるため遅延させない）
+function openPicker(){
+  const el=$("wd");
+  if(el.showPicker){ try{ el.showPicker(); return; }catch(e){} }
+  el.focus(); el.click();
+}
+function backBtn(){ openPicker(); }   // 「今日」は専用ボタン(goToday)があるのでダブルタップ判定は不要
+
+function render(){
+  const w=workDate(); $("wd").value=w;
+  // 日付の状態表示
+  const note=$("dnote");
+  if(!isOn()){
+    note.className="dnote";
+    note.textContent=`休止中 — ${fmtD(w)}（${wdOf(w)}）。未入力の警告はお休みです`;
+  }else if(w<today()){
+    note.className="dnote behind";
+    note.textContent=`⚠ ${fmtD(w)}（${wdOf(w)}）が未入力です。この日を打つと次の日へ進みます。`;
+  }else{
+    note.className="dnote";
+    note.textContent=`本日 ${fmtD(w)}（${wdOf(w)}）`;
+  }
+  // 従業員
+  $("rmbtn").textContent = removeMode ? "✓ 完了" : "✏ 削除";
+  $("emps").innerHTML=emps().map((name,i)=>{
+    const io=lastInOut(name);
+    const eh=hoursOf(name,"早出"), oh=hoursOf(name,"残業");
+    const ncls=removeMode?'name del':('name '+(io?'act':''));
+    return `<div class="emp" data-emp="${i}">
+      <div class="${ncls}" data-i="${i}" onpointerdown="nameDown(event,${i})">${removeMode?'✕ ':''}${esc(name)}</div>
+      <button class="btn b-in ${io==='出勤'?'on':''}" onclick="punchEmp(${i},'出勤')">出勤</button>
+      <button class="btn b-out ${io==='早退'?'on':''}" onclick="punchEmp(${i},'早退')">早退</button>
+      <button class="btn b-e ${eh?'has':''}" onclick="askHoursEmp(${i},'早出')">早出<span class="badge">${eh?eh+'h':'▾'}</span></button>
+      <button class="btn b-o ${oh?'has':''}" onclick="askHoursEmp(${i},'残業')">残業<span class="badge">${oh?oh+'h':'▾'}</span></button>
+    </div>`;
+  }).join("");
+  // 打刻ログ（作業日）
+  const tagcls={"出勤":"t-in","早退":"t-out","早出":"t-e","残業":"t-o"};
+  const rows=logs().map((x,i)=>({x,i})).filter(o=>o.x.date===w);
+  $("loglist").innerHTML = rows.map(o=>{
+    const x=o.x, h=x.hours?` ${x.hours}h`:"";
+    return `<div class="logrow">
+      <span class="tag ${tagcls[x.type]}">${x.type}${h}</span>
+      <span class="nm">${esc(x.name)}</span>
+      <span class="tm">${x.time}</span>
+      <button class="x" onclick="delLog(${o.i})">🗑</button>
+    </div>`;
+  }).join("") || `<div class="logrow"><span class="tm">この日の打刻はまだありません</span></div>`;
+  // 備考
+  $("memo").value=(load(MK,{})[w])||"";
+  // 1週間チェック（当日から過去7日）
+  let html="";
+  for(let i=0;i<7;i++){
+    const d=addDays(today(),-i);
+    const has=dayHasPunch(d);
+    const cnt=logs().filter(x=>x.date===d).length;
+    html+=`<div class="wrow ${d===today()?'today':''}" onclick="gotoDay('${d}')">
+      <span class="wd">${fmtD(d)}<span class="wsub">（${wdOf(d)}）${d===today()?' 今日':''}</span></span>
+      <span class="stat ${has?'ok':'no'}">${has?'● 打った'+(cnt?` ${cnt}`:''):'× 未入力'}</span>
+      ${(has&&isSent(d))?`<span class="sentbadge">✓送信済</span>`:''}
+      ${has?`<button class="wdel" onclick="delDay(event,'${d}')">🗑</button>`:''}
+    </div>`;
+  }
+  $("week").innerHTML=html;
+}
+
+function exportCSV(toOneDrive){
+  const all=logs();
+  if(all.length===0){ uiAlert("ログがありません"); return; }
+  const m=load(MK,{});
+  let csv="日付,時刻,名前,種別,時間,備考\n";
+  all.slice().sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).forEach(x=>{
+    const memo=(m[x.date]||"").replace(/[\r\n]/g," ");
+    csv+=`${qcsv(x.date)},${qcsv(x.time)},${qcsv(x.name)},${qcsv(x.type)},${qcsv(x.hours)},${qcsv(memo)}\n`;
+  });
+  const ym=workDate().slice(0,7).replace("-","");
+  const fname=`kyuyo_${ym}.csv`, bom="﻿";
+  const blob=new Blob([bom+csv],{type:"text/csv;charset=utf-8"});
+  const file=new File([blob],fname,{type:"text/csv"});
+  if(toOneDrive && navigator.canShare && navigator.canShare({files:[file]})){
+    navigator.share({files:[file],title:fname}).catch(()=>{});
+  }else{
+    const url=URL.createObjectURL(blob); const a=document.createElement("a");
+    a.href=url; a.download=fname; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+}
+
+function tick(){ const n=new Date();
+  $("ct").textContent=`${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
+  $("cd").textContent=`${fmtD(today())}（${wdOf(today())}）`;
+}
+renderPower(); render(); tick(); setInterval(tick,1000);
+</script>
+</body>
+</html>
