@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="売上入力">
+<title>売上入力</title>
+<style>
+  :root{
+    --card:#ffffff; --text:#1a1f3a; --muted:#8a93b8; --line:#e3e7f3; --accent:#1b2545;
+    --send:#16a34a; --danger:#ef4444;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; font-family:-apple-system,"Hiragino Sans","Yu Gothic",sans-serif;
+        background:#eef1f8; color:var(--text); padding:14px 14px 110px; }
+  .topbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+  .topbar h1{ font-size:22px; margin:0; }
+  .clock{ text-align:right; } .clock .d{ font-size:13px; color:#5b639a; } .clock .t{ font-size:24px; font-weight:800; }
+  .datebar{ background:var(--accent); color:#fff; border-radius:12px; padding:12px;
+        text-align:center; font-weight:700; font-size:17px; margin-bottom:6px; display:flex;
+        align-items:center; justify-content:center; gap:8px; }
+  .datebar input{ background:transparent; border:none; color:#fff; font-size:17px; font-weight:700; }
+  .dnote{ text-align:center; font-size:12px; color:#5b639a; margin-bottom:10px; }
+  .dnote.warn{ color:var(--danger); font-weight:700; }
+  .nav{ display:flex; gap:8px; margin-bottom:12px; }
+  .navbtn{ flex:1; border:none; border-radius:12px; padding:12px 6px; font-weight:800; font-size:15px; }
+  .navbtn.now{ background:var(--accent); color:#fff; }
+  .fields{ background:var(--card); border:1px solid var(--line); border-radius:14px;
+        padding:6px 12px; box-shadow:0 1px 3px rgba(20,30,80,.05); }
+  .frow{ display:flex; align-items:center; gap:10px; padding:8px 2px; border-bottom:1px solid var(--line); }
+  .frow:last-child{ border-bottom:none; }
+  .frow .lbl{ flex:0 0 132px; font-weight:700; font-size:16px; }
+  .frow input{ flex:1; border:1px solid var(--line); border-radius:10px; padding:12px;
+        font-size:18px; text-align:right; -moz-appearance:textfield; }
+  .frow input::-webkit-outer-spin-button,.frow input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+  .total{ display:flex; justify-content:space-between; align-items:center; margin:12px 2px 4px;
+        font-weight:800; font-size:17px; }
+  .total .amt{ font-size:22px; color:var(--send); }
+  .sec-head{ display:flex; justify-content:space-between; align-items:center; margin:16px 2px 8px; }
+  .sec-head .lbl{ color:#5b639a; font-weight:700; }
+  .list{ background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+  .lrow{ display:flex; align-items:center; gap:12px; padding:13px 14px; border-bottom:1px solid var(--line); }
+  .lrow:last-child{ border-bottom:none; }
+  .lrow.today{ background:#eef4ff; }
+  .lrow .wd{ flex:1; font-weight:700; font-size:15px; }
+  .lrow .wsub{ color:var(--muted); font-size:12px; font-weight:400; margin-left:6px; }
+  .lrow .amt{ font-weight:800; font-size:15px; color:#334155; }
+  .lrow .sentbadge{ font-size:12px; font-weight:800; color:#1d4ed8; background:#dbeafe; padding:5px 10px; border-radius:20px; white-space:nowrap; }
+  .lrow .wdel{ border:none; background:none; color:var(--muted); font-size:17px; padding:4px 6px; }
+  .lempty{ padding:16px; text-align:center; color:var(--muted); }
+  .footbar{ position:fixed; left:0; right:0; bottom:0; padding:10px 14px;
+        padding-bottom:calc(10px + env(safe-area-inset-bottom));
+        background:#eef1f8; box-shadow:0 -2px 12px rgba(20,30,80,.10); z-index:50; display:flex; gap:8px; }
+  .bigbtn{ flex:1; border:none; border-radius:14px; padding:16px; font-size:17px; font-weight:800; color:#fff; }
+  .bigbtn.save{ background:var(--accent); } .bigbtn.send{ background:var(--send); }
+  .hint{ text-align:center; color:#7c84ad; font-size:12px; margin-top:8px; }
+  /* 画面内モーダル */
+  .modal-bg{ position:fixed; inset:0; background:rgba(15,18,38,.55); display:none;
+        align-items:center; justify-content:center; z-index:999; padding:24px; }
+  .modal{ background:#fff; border-radius:16px; padding:20px; width:100%; max-width:340px;
+        box-shadow:0 12px 40px rgba(0,0,0,.3); }
+  .modal .m-msg{ font-size:16px; font-weight:700; margin-bottom:14px; line-height:1.5; }
+  .modal input{ width:100%; font-size:18px; padding:12px; border:1px solid var(--line);
+        border-radius:10px; margin-bottom:14px; }
+  .m-btns{ display:flex; gap:10px; }
+  .m-btns button{ flex:1; border:none; border-radius:10px; padding:13px; font-size:16px; font-weight:800; }
+  .m-btns .m-ok{ background:var(--accent); color:#fff; } .m-btns .m-cancel{ background:#e2e8f0; color:#334155; }
+</style>
+</head>
+<body>
+  <div class="modal-bg" id="modal">
+    <div class="modal">
+      <div class="m-msg" id="m-msg"></div>
+      <input id="m-input" style="display:none;">
+      <div class="m-btns" id="m-btns"></div>
+    </div>
+  </div>
+
+  <div class="topbar">
+    <h1>💰 売上入力</h1>
+    <div class="clock"><div class="d" id="cd"></div><div class="t" id="ct"></div></div>
+  </div>
+
+  <div class="datebar" onclick="openPicker()">📅 <input type="date" id="wd" min="2025-12-01" max="2026-04-30" onchange="manualDate()"></div>
+  <div class="dnote" id="dnote"></div>
+  <div class="nav">
+    <button class="navbtn now" onclick="goToday()">今日</button>
+  </div>
+
+  <div class="fields" id="fields"></div>
+
+  <div class="total"><span>当日売上（現金＋尾瀬＋paypay＋クレカ）</span><span class="amt" id="total">¥0</span></div>
+
+  <div class="sec-head"><span class="lbl">入力済みの日</span></div>
+  <div class="list" id="list"></div>
+
+  <div class="footbar">
+    <button class="bigbtn save" onclick="saveDay()">この日を保存</button>
+    <button class="bigbtn send" onclick="sendCSV()">送信 ▶</button>
+  </div>
+  <p class="hint">「送信」を押すと共有が開く → 「"ファイル"に保存」→ OneDrive →「売上」。PCで「CSV取込」ボタンを押すと売上帳に反映されます。</p>
+
+<script>
+const DK="uriage_days_v1", SK="uriage_sent_v1", WKEY="uriage_workdate_v1";
+const $=id=>document.getElementById(id);
+// 内部キー(左)は売上帳の列ラベルに一致。表示名(右)はユーザーの馴染む略称。
+const ITEMS=[
+  ["現金","現金"],
+  ["尾瀬だっペイ","尾瀬だっペイ"],
+  ["paypay","paypay"],
+  ["クレジットカード","クレカ"],
+  ["自販機","自販機"],
+  ["チューンナップ","チューンナップ"],
+  ["レンタル","レンタル"],
+];
+// 当日売上に含む4項目(売上帳のL列 =E+F+G+H と一致)
+const TODAY_KEYS=["現金","尾瀬だっペイ","paypay","クレジットカード"];
+const SEASON_MIN="2025-12-01", SEASON_MAX="2026-04-30";
+const WD="日月火水木金土";
+
+const load=(k,d)=>{ try{return JSON.parse(localStorage.getItem(k))??d;}catch(e){return d;} };
+const set=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const days=()=>load(DK,{});         // { "2026-04-08": {現金:1000, ...}, ... }
+const pad=n=>String(n).padStart(2,"0");
+const ymd=dt=>`${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}`;
+const today=()=>ymd(new Date());
+const fmtD=s=>{ const[y,m,d]=s.split("-"); return `${parseInt(m)}/${parseInt(d)}`; };
+const wdOf=s=>WD[new Date(s+"T00:00").getDay()];
+const slash=s=>s.replace(/-/g,"/");   // 2026-04-08 -> 2026/04/08 (CSV/売上帳の形式)
+const yen=n=>"¥"+Math.round(n||0).toLocaleString();
+const inSeason=s=> s>=SEASON_MIN && s<=SEASON_MAX;
+
+// ── 画面内モーダル ──
+function closeModal(){ $("modal").style.display="none"; $("m-input").style.display="none"; $("m-btns").innerHTML=""; }
+function uiAlert(msg, cb){
+  $("m-msg").textContent=msg; $("m-input").style.display="none";
+  $("m-btns").innerHTML='<button class="m-ok">OK</button>'; $("modal").style.display="flex";
+  $("m-btns").querySelector(".m-ok").onclick=()=>{ closeModal(); cb&&cb(); };
+}
+function uiConfirm(msg, onYes){
+  $("m-msg").textContent=msg; $("m-input").style.display="none";
+  $("m-btns").innerHTML='<button class="m-cancel">いいえ</button><button class="m-ok">はい</button>';
+  $("modal").style.display="flex";
+  $("m-btns").querySelector(".m-ok").onclick=()=>{ closeModal(); onYes&&onYes(); };
+  $("m-btns").querySelector(".m-cancel").onclick=closeModal;
+}
+
+// ── 作業日 ──
+function workDate(){
+  let w=load(WKEY,null);
+  if(!w||!inSeason(w)){ w=inSeason(today())?today():SEASON_MAX; set(WKEY,w); }
+  return w;
+}
+function setWork(w){ set(WKEY,w); $("wd").value=w; }
+function manualDate(){
+  const w=$("wd").value;
+  if(!inSeason(w)){ uiAlert("シーズン(2025/12/01〜2026/04/30)の日付を入れてください"); $("wd").value=workDate(); return; }
+  setWork(w); render();
+}
+function goToday(){ const t=today(); if(!inSeason(t)){ uiAlert("今日はシーズン外です。日付を選んでください"); return; } setWork(t); render(); }
+function openPicker(){ const el=$("wd"); if(el.showPicker){ try{ el.showPicker(); return; }catch(e){} } el.focus(); el.click(); }
+
+// 送信済管理(編集したら解除)
+const isSent=d=>load(SK,[]).includes(d);
+function markAllSent(){ set(SK, Object.keys(days())); }
+function clearSent(d){ set(SK, load(SK,[]).filter(x=>x!==d)); }
+
+function curVals(){
+  const o={};
+  ITEMS.forEach(([k])=>{ const v=$("f_"+k).value.trim(); o[k]=v===""?0:Number(v); });
+  return o;
+}
+function recalc(){
+  const o=curVals();
+  let t=0; TODAY_KEYS.forEach(k=>{ t+=Number(o[k])||0; });
+  $("total").textContent=yen(t);
+}
+function saveDay(){
+  const w=workDate();
+  if(!inSeason(w)){ uiAlert("シーズン外の日付です"); return; }
+  const o=curVals();
+  for(const [k] of ITEMS){ if(isNaN(o[k])){ uiAlert("数値を入れてください（"+k+"）"); return; } }
+  const all=days(); all[w]=o; set(DK,all);
+  clearSent(w);
+  uiAlert(fmtD(w)+" を保存しました");
+  render();
+}
+function loadDay(d){ setWork(d); render(); }
+function delDay(ev,d){ ev.stopPropagation(); uiConfirm(fmtD(d)+" の入力を削除しますか？", ()=>{ const a=days(); delete a[d]; set(DK,a); clearSent(d); render(); }); }
+
+function render(){
+  const w=workDate(); $("wd").value=w;
+  const note=$("dnote");
+  if(!inSeason(w)){ note.className="dnote warn"; note.textContent="⚠ シーズン外の日付です"; }
+  else{ note.className="dnote"; note.textContent=`${fmtD(w)}（${wdOf(w)}）を入力中`; }
+
+  // 入力欄(この日の保存済み値を反映)
+  const cur=days()[w]||{};
+  $("fields").innerHTML=ITEMS.map(([k,label])=>{
+    const v=(cur[k]!=null)?cur[k]:"";
+    return `<div class="frow"><span class="lbl">${label}</span>
+      <input id="f_${k}" type="number" inputmode="numeric" value="${v}" placeholder="0" oninput="recalc()"></div>`;
+  }).join("");
+  recalc();
+
+  // 入力済みの日一覧(日付降順)
+  const all=days();
+  const keys=Object.keys(all).sort().reverse();
+  if(keys.length===0){
+    $("list").innerHTML='<div class="lempty">まだ保存された日はありません</div>';
+  }else{
+    $("list").innerHTML=keys.map(d=>{
+      let t=0; TODAY_KEYS.forEach(k=>{ t+=Number(all[d][k])||0; });
+      return `<div class="lrow ${d===w?'today':''}" onclick="loadDay('${d}')">
+        <span class="wd">${fmtD(d)}<span class="wsub">（${wdOf(d)}）</span></span>
+        <span class="amt">${yen(t)}</span>
+        ${isSent(d)?'<span class="sentbadge">✓送信済</span>':''}
+        <button class="wdel" onclick="delDay(event,'${d}')">🗑</button>
+      </div>`;
+    }).join("");
+  }
+}
+
+function buildCSV(){
+  const all=days();
+  const keys=Object.keys(all).sort();
+  let csv="日付,現金,尾瀬だっペイ,paypay,クレジットカード,自販機,チューンナップ,レンタル\n";
+  keys.forEach(d=>{
+    const o=all[d];
+    const row=[slash(d)].concat(ITEMS.map(([k])=>Number(o[k])||0));
+    csv+=row.join(",")+"\n";
+  });
+  return csv;
+}
+function sendCSV(){
+  const all=days();
+  if(Object.keys(all).length===0){ uiAlert("送信するデータがありません。先に保存してください"); return; }
+  const csv=buildCSV();
+  const stamp=new Date();
+  const fname=`uriage_${stamp.getFullYear()}${pad(stamp.getMonth()+1)}${pad(stamp.getDate())}_${pad(stamp.getHours())}${pad(stamp.getMinutes())}${pad(stamp.getSeconds())}.csv`;
+  const bom="﻿";
+  const blob=new Blob([bom+csv],{type:"text/csv;charset=utf-8"});
+  const file=new File([blob],fname,{type:"text/csv"});
+  const done=()=>{ markAllSent(); render(); };
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    navigator.share({files:[file],title:fname}).then(done).catch(()=>{});
+  }else{
+    const url=URL.createObjectURL(blob); const a=document.createElement("a");
+    a.href=url; a.download=fname; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+    done();
+  }
+}
+
+function tick(){ const n=new Date();
+  $("ct").textContent=`${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
+  $("cd").textContent=`${fmtD(today())}（${wdOf(today())}）`;
+}
+render(); tick(); setInterval(tick,1000);
+</script>
+</body>
+</html>
