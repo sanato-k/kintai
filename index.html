@@ -102,6 +102,8 @@
   .m-btns .m-ok{ background:var(--accent); color:#fff; } .m-btns .m-cancel{ background:#e2e8f0; color:#334155; }
   .name.del{ background:#fee2e2; color:#b91c1c; }
   .btn-detail{ border:none; border-radius:8px; background:#e0e7ff; color:#3730a3; font-size:13px; font-weight:800; padding:6px 8px; cursor:pointer; flex-shrink:0; }
+  .cat-sel{ flex:0 0 44px; border:1px solid var(--line); border-radius:8px; background:var(--card);
+        color:var(--text); font-size:13px; font-weight:800; text-align:center; padding:2px; }
 
   /* ── 個人別出勤簿ページ ── */
   #page-personal{ display:none; padding:14px 14px 96px; }
@@ -527,6 +529,11 @@ function render(){
       <button class="btn b-out ${io==='早退'?'on':''}" onclick="punchEmp(${i},'早退')">早退</button>
       <button class="btn b-e ${eh?'has':''}" onclick="askHoursEmp(${i},'早出')">早出<span class="badge">${eh?eh+'h':'▾'}</span></button>
       <button class="btn b-o ${oh?'has':''}" onclick="askHoursEmp(${i},'残業')">残業<span class="badge">${oh?oh+'h':'▾'}</span></button>
+      <select class="cat-sel" onchange="setEmpCat('${esc(name).replace(/'/g,"\\'")}',this.value)">
+        <option value="kyuyo" ${empCat(name)==='kyuyo'?'selected':''}>給</option>
+        <option value="senju" ${empCat(name)==='senju'?'selected':''}>専</option>
+        <option value="other" ${empCat(name)==='other'?'selected':''}>他</option>
+      </select>
     </div>`;
   }).join("");
   // 打刻ログ（作業日）
@@ -749,6 +756,16 @@ function pbClearDay(){
   });
 }
 
+// ── 従業員の区分（給与賃金/専従者給与/その他） ──
+const EMPCAT_KEY="kinmu_empcat_v1";
+const empCat=(name)=>load(EMPCAT_KEY,{})[name]||"kyuyo";
+function setEmpCat(name,cat){
+  const m=load(EMPCAT_KEY,{});
+  m[name]=cat;
+  set(EMPCAT_KEY,m);
+  if(document.getElementById('page-rates').classList.contains('active')) renderRates();
+}
+
 // ── 単価設定（3カテゴリ：給与賃金 / 専従者給与 / その他） ──
 const RATE_CATS={
   kyuyo:{ key:"kinmu_rates_v1", label:"給与賃金", fname:"tanka",
@@ -793,7 +810,9 @@ function renderRates(){
   ).join("");
   const all=ratesOf(rateTab);
   const gridCls = cfg.fields.length===1 ? 'rate-grid g1' : 'rate-grid';
-  document.getElementById('rates-list').innerHTML = emps().map(name=>{
+  const targetEmps = emps().filter(name=>empCat(name)===rateTab);
+  document.getElementById('rates-list').innerHTML = (targetEmps.length?targetEmps:['(この区分の従業員はいません)']).map(name=>{
+    if(name==='(この区分の従業員はいません)') return `<div class="rate-card" style="text-align:center;color:#8a93b8;">${name}</div>`;
     const r=all[name]||{};
     const fields=cfg.fields.map(([k,label])=>`
       <div class="rate-field">
@@ -817,7 +836,7 @@ function exportRatesCSV(){
   const cfg=RATE_CATS[rateTab];
   const all=ratesOf(rateTab);
   let csv="氏名,"+cfg.fields.map(([,label])=>label).join(",")+"\n";
-  emps().forEach(name=>{
+  emps().filter(name=>empCat(name)===rateTab).forEach(name=>{
     const r=all[name]||{};
     const row=[name,...cfg.fields.map(([k])=>r[k]!=null?r[k]:"")];
     csv+=row.map(qcsv).join(",")+"\n";
