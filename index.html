@@ -257,9 +257,6 @@
   </div>
   <div id="emps"></div>
 
-  <div class="sec-head"><span class="lbl">打刻ログ（この日）</span><button class="clr" onclick="clearDay()">この日を消す</button></div>
-  <div class="log" id="loglist"></div>
-
   <div class="sec-head" style="margin-top:14px;"><span class="lbl">備考</span></div>
   <textarea id="memo" placeholder="連絡事項・特記事項など..." oninput="saveMemo()"></textarea>
 
@@ -628,18 +625,6 @@ function render(){
       </select>
     </div>`;
   }).join("");
-  // 打刻ログ（作業日）
-  const tagcls={"出勤":"t-in","早退":"t-out","早出":"t-e","残業":"t-o"};
-  const rows=logs().map((x,i)=>({x,i})).filter(o=>o.x.date===w);
-  $("loglist").innerHTML = rows.map(o=>{
-    const x=o.x, h=x.hours?` ${x.hours}h`:"";
-    return `<div class="logrow">
-      <span class="tag ${tagcls[x.type]}">${x.type}${h}</span>
-      <span class="nm">${esc(x.name)}</span>
-      <span class="tm">${x.time}</span>
-      <button class="x" onclick="delLog(${o.i})">🗑</button>
-    </div>`;
-  }).join("") || `<div class="logrow"><span class="tm">この日の打刻はまだありません</span></div>`;
   // 備考
   if(document.activeElement!==$("memo")) $("memo").value=(load(MK,{})[w])||"";
   // 1週間チェック（当日から過去7日）
