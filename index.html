@@ -282,7 +282,10 @@
       <button class="mini rm" id="rmbtn" onclick="rmEmp()">✏ 削除</button>
     </span>
   </div>
-  <div id="emps"></div>
+  <div style="display:flex; gap:8px;">
+    <div id="left-btn-space" style="flex:0 0 50px;"></div>
+    <div id="emps" style="flex:1; min-width:0;"></div>
+  </div>
 
   <div class="sec-head" style="margin-top:14px;"><span class="lbl">備考</span></div>
   <textarea id="memo" placeholder="連絡事項・特記事項など..." oninput="saveMemo()"></textarea>
