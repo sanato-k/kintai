@@ -161,6 +161,8 @@
         font-weight:800; color:#5b639a; background:#e2e8f0; }
   .rate-tabs button.on{ background:var(--accent); color:#fff; }
   .rate-grid.g1{ grid-template-columns:1fr; }
+  .rate-grid.bulk-row{ display:flex; gap:8px; }
+  .rate-grid.bulk-row .rate-field{ flex:1; min-width:0; }
 </style>
 </head>
 <body>
@@ -791,8 +793,6 @@ const RATE_CATS={
       ["doniti","土日"],
       ["sotai","早退(控除)"],
       ["hayade","早出/残業"],
-      ["season","シーズン給"],
-      ["kikin","基金年金"],
     ]},
   senju:{ key:"kinmu_rates_senju_v1", label:"専従者給与", fname:"senju",
     fields:[
@@ -834,7 +834,7 @@ function renderRates(){
     </div>`).join("");
   document.getElementById('rate-bulk').innerHTML = `
     <div class="rc-name">🔁 一括変更（同区分の全員に反映）</div>
-    <div class="${gridCls}">${bulkFields}</div>
+    <div class="rate-grid bulk-row">${bulkFields}</div>
     <button class="rate-export" style="margin-top:8px;" onclick="applyBulkRates()">この内容で変更 ▶</button>
   `;
 
