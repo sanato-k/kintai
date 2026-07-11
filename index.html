@@ -446,7 +446,8 @@ function confirmDay(){
   if(!dayHasPunch(w)) uiConfirm(`${fmtD(w)} は打刻がありません。それでも確定しますか？`, go);
   else go();
 }
-function beep(){
+function クリック作動(el){
+  // クリック音（ピッ）+ ボタンを0.5秒だけ薄くして元に戻す
   try{
     const ctx=new (window.AudioContext||window.webkitAudioContext)();
     const osc=ctx.createOscillator(), gain=ctx.createGain();
@@ -456,18 +457,16 @@ function beep(){
     osc.connect(gain); gain.connect(ctx.destination);
     osc.start(); osc.stop(ctx.currentTime+0.15);
   }catch(e){}
-}
-function flashBtn(el){
-  if(!el) return;
-  const orig=el.style.opacity;
-  el.style.transition="opacity .15s";
-  el.style.opacity="0.4";
-  setTimeout(()=>{ el.style.opacity=orig||""; }, 1000);
+  if(el){
+    const orig=el.style.opacity;
+    el.style.transition="opacity .15s";
+    el.style.opacity="0.4";
+    setTimeout(()=>{ el.style.opacity=orig||""; }, 500);
+  }
 }
 function sendDay(ev){
   exportCSV(true);
-  beep();
-  flashBtn(ev && ev.currentTarget);
+  クリック作動(ev && ev.currentTarget);
 }
 function askHours(name,type){
   uiPrompt(`${name} の${type}時間（h）`, "1", (h)=>{
