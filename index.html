@@ -250,41 +250,43 @@
   </div>
 
   <div id="page-main">
-  <div class="topbar">
-    <h1>📋 出勤簿</h1>
-    <div class="topright">
-      <div class="clock"><div class="d" id="cd"></div><div class="t" id="ct"></div></div>
-      <div class="power" id="power" onclick="togglePower()">
-        <span class="plabel" id="plabel">稼働</span>
-        <span class="switch"></span>
+  <div style="display:flex; gap:8px; align-items:stretch;">
+    <div id="left-btn-space" style="flex:0 0 180px;"></div>
+    <div style="flex:1; min-width:0;">
+      <div class="topbar">
+        <h1>📋 出勤簿</h1>
+        <div class="topright">
+          <div class="clock"><div class="d" id="cd"></div><div class="t" id="ct"></div></div>
+          <div class="power" id="power" onclick="togglePower()">
+            <span class="plabel" id="plabel">稼働</span>
+            <span class="switch"></span>
+          </div>
+        </div>
       </div>
+
+      <div class="datebar" onclick="openPicker()">📅 <input type="date" id="wd" onchange="manualDate()"></div>
+      <div class="dnote" id="dnote"></div>
+      <div class="nav">
+        <button class="navbtn now" onclick="goToday(event)">今日</button>
+        <button class="navbtn" style="background:#0891b2;color:#fff;flex:1;" onclick="forcePushAll(event)">🔄 今のデータを送信</button>
+        <button class="navbtn" style="background:#e2e8f0;color:#334155;flex:1;" onclick="forcePullAll(event)">⬇ iPadデータを取得</button>
+      </div>
+
+      <div id="future-btn-space" style="min-height:50px; margin-bottom:12px;"></div>
+
+      <div class="sec-head">
+        <select class="page-nav-sel" id="page-nav-sel" onchange="pageNavGo(this.value)">
+          <option value="main" selected>従業員</option>
+          <option value="personal">個人出勤簿</option>
+          <option value="rates">単価</option>
+        </select>
+        <span>
+          <button class="mini add" onclick="addEmp()">＋ 追加</button>
+          <button class="mini rm" id="rmbtn" onclick="rmEmp()">✏ 削除</button>
+        </span>
+      </div>
+      <div id="emps"></div>
     </div>
-  </div>
-
-  <div class="datebar" onclick="openPicker()">📅 <input type="date" id="wd" onchange="manualDate()"></div>
-  <div class="dnote" id="dnote"></div>
-  <div class="nav">
-    <button class="navbtn now" onclick="goToday(event)">今日</button>
-    <button class="navbtn" style="background:#0891b2;color:#fff;flex:1;" onclick="forcePushAll(event)">🔄 今のデータを送信</button>
-    <button class="navbtn" style="background:#e2e8f0;color:#334155;flex:1;" onclick="forcePullAll(event)">⬇ iPadデータを取得</button>
-  </div>
-
-  <div id="future-btn-space" style="min-height:50px; margin-bottom:12px;"></div>
-
-  <div class="sec-head">
-    <select class="page-nav-sel" id="page-nav-sel" onchange="pageNavGo(this.value)">
-      <option value="main" selected>従業員</option>
-      <option value="personal">個人出勤簿</option>
-      <option value="rates">単価</option>
-    </select>
-    <span>
-      <button class="mini add" onclick="addEmp()">＋ 追加</button>
-      <button class="mini rm" id="rmbtn" onclick="rmEmp()">✏ 削除</button>
-    </span>
-  </div>
-  <div style="display:flex; gap:8px;">
-    <div id="left-btn-space" style="flex:0 0 140px;"></div>
-    <div id="emps" style="flex:1; min-width:0;"></div>
   </div>
 
   <div class="sec-head" style="margin-top:14px;"><span class="lbl">備考</span></div>
