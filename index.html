@@ -114,8 +114,11 @@
   .pb-table{ width:100%; border-collapse:collapse; font-size:14px; }
   .pb-table th{ background:var(--accent); color:#fff; padding:8px 6px; text-align:center; }
   .pb-table td{ padding:7px 6px; text-align:center; border-bottom:1px solid var(--line); }
-  .pb-table tr.weekend td{ background:#f0f4ff; }
-  .pb-table tr.holiday td{ background:#fff0f0; }
+  .pb-table tr.saturday td{ background:#eaf2ff; }
+  .pb-table tr.sunday td{ background:#ffeef0; }
+  .pb-table tr.holiday td{ background:#ffeef0; }
+  .pb-table tr.saturday td:first-child{ color:#1d4ed8; font-weight:800; }
+  .pb-table tr.sunday td:first-child, .pb-table tr.holiday td:first-child{ color:#db2777; font-weight:800; }
   .pb-table .tag-in{ color:var(--in-on); font-weight:800; }
   .pb-table .tag-out{ color:var(--out-on); }
   .pb-table .tag-e{ color:var(--early-on); }
@@ -247,6 +250,52 @@ const $=id=>document.getElementById(id);
 const DEF=["宗徳","みき子","絹次","大輝","浩太","久美子","萩原 千恵","花田 理恵","木場 雅子","天田 仁美","ともちゃん","まきちゃん","土井さん","工藤君","かべちゃん","のりちゃん","その他"];
 const WD="日月火水木金土";
 let removeMode=false;
+
+// ── 日本の祝日判定（簡易版。振替休日対応） ──
+function nthMonday(y,m,n){ // その月のn番目の月曜日
+  const d=new Date(y,m-1,1);
+  let cnt=0;
+  while(true){
+    if(d.getDay()===1){ cnt++; if(cnt===n) return d.getDate(); }
+    d.setDate(d.getDate()+1);
+  }
+}
+function shunbun(y){ return Math.floor(20.8431+0.242194*(y-1980)-Math.floor((y-1980)/4)); }
+function shuubun(y){ return Math.floor(23.2488+0.242194*(y-1980)-Math.floor((y-1980)/4)); }
+function holidaySet(y){
+  const s=new Set();
+  const add=(m,d)=>s.add(`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`);
+  add(1,1);                          // 元日
+  add(1,nthMonday(y,1,2));           // 成人の日
+  add(2,11);                         // 建国記念の日
+  add(2,23);                         // 天皇誕生日
+  add(3,shunbun(y));                 // 春分の日
+  add(4,29);                         // 昭和の日
+  add(5,3); add(5,4); add(5,5);      // 憲法記念日・みどりの日・こどもの日
+  add(7,nthMonday(y,7,3));           // 海の日
+  add(8,11);                         // 山の日
+  add(9,nthMonday(y,9,3));           // 敬老の日
+  add(9,shuubun(y));                 // 秋分の日
+  add(10,nthMonday(y,10,2));         // スポーツの日
+  add(11,3);                         // 文化の日
+  add(11,23);                        // 勤労感謝の日
+  // 振替休日：祝日が日曜なら翌日以降の最初の平日を追加
+  [...s].forEach(ds=>{
+    const d=new Date(ds+'T00:00');
+    if(d.getDay()===0){
+      let nd=new Date(d); nd.setDate(nd.getDate()+1);
+      while(s.has(ymd(nd))) nd.setDate(nd.getDate()+1);
+      s.add(ymd(nd));
+    }
+  });
+  return s;
+}
+const _holidayCache={};
+function isHoliday(dateStr){
+  const y=parseInt(dateStr.slice(0,4));
+  if(!_holidayCache[y]) _holidayCache[y]=holidaySet(y);
+  return _holidayCache[y].has(dateStr);
+}
 
 const load=(k,d)=>{ try{return JSON.parse(localStorage.getItem(k))??d;}catch(e){return d;} };
 const set=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
@@ -589,7 +638,8 @@ function renderPersonal(){
     const date=`${ym}-${String(d).padStart(2,'0')}`;
     const wd=new Date(date+'T00:00').getDay();
     const wdStr='日月火水木金土'[wd];
-    const isWE=wd===0||wd===6;
+    const isHol=isHoliday(date);
+    const dayCls = isHol ? 'holiday' : (wd===6 ? 'saturday' : (wd===0 ? 'sunday' : ''));
     const recs=byDate[date]||[];
     const hasIn=recs.some(r=>r.type==='出勤');
     const hasOut=recs.some(r=>r.type==='早退');
@@ -599,7 +649,7 @@ function renderPersonal(){
     if(hasOut) soutai++;
     if(eRec) hayade+=parseFloat(eRec.hours)||0;
     if(oRec) zangyou+=parseFloat(oRec.hours)||0;
-    rows+=`<tr class="${isWE?'weekend':''} ${date===pbSelDate?'sel':''}" onclick="pbSelectDay('${date}')">
+    rows+=`<tr class="${dayCls} ${date===pbSelDate?'sel':''}" onclick="pbSelectDay('${date}')">
       <td>${m}/${d}</td>
       <td>${wdStr}</td>
       <td class="tag-in">${hasIn?'○':''}</td>
