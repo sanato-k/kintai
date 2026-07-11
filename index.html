@@ -101,6 +101,7 @@
   .m-btns button{ flex:1; border:none; border-radius:10px; padding:13px; font-size:16px; font-weight:800; }
   .m-btns .m-ok{ background:var(--accent); color:#fff; } .m-btns .m-cancel{ background:#e2e8f0; color:#334155; }
   .name.del{ background:#fee2e2; color:#b91c1c; }
+  .btn-detail{ border:none; border-radius:8px; background:#e0e7ff; color:#3730a3; font-size:13px; font-weight:800; padding:6px 8px; cursor:pointer; flex-shrink:0; }
 
   /* ── 個人別出勤簿ページ ── */
   #page-personal{ display:none; padding:14px 14px 96px; }
@@ -415,6 +416,7 @@ function render(){
     const eh=hoursOf(name,"早出"), oh=hoursOf(name,"残業");
     const ncls=removeMode?'name del':('name '+(io?'act':''));
     return `<div class="emp" data-emp="${i}">
+      <button class="btn-detail" onclick="showPersonalFor(${i})">📋</button>
       <div class="${ncls}" data-i="${i}" onpointerdown="nameDown(event,${i})">${removeMode?'✕ ':''}${esc(name)}</div>
       <button class="btn b-in ${io==='出勤'?'on':''}" onclick="punchEmp(${i},'出勤')">出勤</button>
       <button class="btn b-out ${io==='早退'?'on':''}" onclick="punchEmp(${i},'早退')">早退</button>
@@ -483,6 +485,23 @@ renderPower(); render(); tick(); setInterval(tick,1000);
 function showMain(){
   document.getElementById('page-personal').classList.remove('active');
   document.getElementById('page-main').style.display='';
+}
+function showPersonalFor(i){
+  const name=emps()[i];
+  if(!name) return;
+  // 月セレクト構築
+  const months=new Set();
+  months.add(today().slice(0,7));
+  logs().forEach(x=>{ if(x.date) months.add(x.date.slice(0,7)); });
+  const msel=document.getElementById('pb-month');
+  msel.innerHTML=[...months].sort().reverse().map(m=>`<option value="${m}">${m.replace('-','年')}月</option>`).join('');
+  // 氏名セレクト構築して対象を選択
+  const sel=document.getElementById('pb-name');
+  sel.innerHTML=emps().map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  sel.value=name;
+  document.getElementById('page-main').style.display='none';
+  document.getElementById('page-personal').classList.add('active');
+  renderPersonal();
 }
 function showPersonal(){
   // 氏名セレクト構築
