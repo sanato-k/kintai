@@ -261,6 +261,8 @@ const EK="kinmu_emps_v1", LK="kinmu_logs_v1", MK="kinmu_memo_v1", WKEY="kinmu_wo
 const $=id=>document.getElementById(id);
 const DEF=["宗徳","みき子","絹次","大輝","浩太","久美子","萩原 千恵","花田 理恵","木場 雅子","天田 仁美","ともちゃん","まきちゃん","土井さん","工藤君","かべちゃん","のりちゃん","その他"];
 const WD="日月火水木金土";
+const EMPCAT_KEY="kinmu_empcat_v1";
+const empCat=(name)=>load(EMPCAT_KEY,{})[name]||"kyuyo";
 let removeMode=false;
 
 // ── 日本の祝日判定（簡易版。振替休日対応） ──
@@ -757,8 +759,6 @@ function pbClearDay(){
 }
 
 // ── 従業員の区分（給与賃金/専従者給与/その他） ──
-const EMPCAT_KEY="kinmu_empcat_v1";
-const empCat=(name)=>load(EMPCAT_KEY,{})[name]||"kyuyo";
 function setEmpCat(name,cat){
   const m=load(EMPCAT_KEY,{});
   m[name]=cat;
