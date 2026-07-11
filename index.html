@@ -271,7 +271,7 @@
   <div class="footbar">
     <div style="display:flex; gap:8px;">
       <button class="navbtn" style="background:var(--accent); color:#fff;" onclick="confirmDay()">確定</button>
-      <button class="navbtn next" onclick="sendDay()">送信</button>
+      <button class="navbtn next" onclick="sendDay(event)">送信</button>
       <button class="navbtn" style="background:var(--danger); color:#fff;" onclick="clearDay()">削除</button>
     </div>
   </div>
@@ -446,9 +446,28 @@ function confirmDay(){
   if(!dayHasPunch(w)) uiConfirm(`${fmtD(w)} は打刻がありません。それでも確定しますか？`, go);
   else go();
 }
-function sendDay(){
+function beep(){
+  try{
+    const ctx=new (window.AudioContext||window.webkitAudioContext)();
+    const osc=ctx.createOscillator(), gain=ctx.createGain();
+    osc.type="sine"; osc.frequency.value=880;
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.15);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime+0.15);
+  }catch(e){}
+}
+function flashBtn(el){
+  if(!el) return;
+  const orig=el.style.opacity;
+  el.style.transition="opacity .15s";
+  el.style.opacity="0.4";
+  setTimeout(()=>{ el.style.opacity=orig||""; }, 1000);
+}
+function sendDay(ev){
   exportCSV(true);
-  speak("送信しました");
+  beep();
+  flashBtn(ev && ev.currentTarget);
 }
 function askHours(name,type){
   uiPrompt(`${name} の${type}時間（h）`, "1", (h)=>{
