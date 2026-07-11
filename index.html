@@ -101,6 +101,28 @@
   .m-btns button{ flex:1; border:none; border-radius:10px; padding:13px; font-size:16px; font-weight:800; }
   .m-btns .m-ok{ background:var(--accent); color:#fff; } .m-btns .m-cancel{ background:#e2e8f0; color:#334155; }
   .name.del{ background:#fee2e2; color:#b91c1c; }
+
+  /* ── 個人別出勤簿ページ ── */
+  #page-personal{ display:none; padding:14px 14px 96px; }
+  #page-personal.active{ display:block; }
+  .pb-head{ display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+  .pb-back{ background:var(--accent); color:#fff; border:none; border-radius:10px; padding:10px 16px; font-size:15px; font-weight:800; cursor:pointer; }
+  .pb-title{ font-size:20px; font-weight:800; }
+  .pb-controls{ display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+  .pb-controls select{ flex:1; border:1px solid var(--line); border-radius:10px; padding:10px; font-size:15px; background:var(--card); color:var(--text); }
+  .pb-table{ width:100%; border-collapse:collapse; font-size:14px; }
+  .pb-table th{ background:var(--accent); color:#fff; padding:8px 6px; text-align:center; }
+  .pb-table td{ padding:7px 6px; text-align:center; border-bottom:1px solid var(--line); }
+  .pb-table tr.weekend td{ background:#f0f4ff; }
+  .pb-table tr.holiday td{ background:#fff0f0; }
+  .pb-table .tag-in{ color:var(--in-on); font-weight:800; }
+  .pb-table .tag-out{ color:var(--out-on); }
+  .pb-table .tag-e{ color:var(--early-on); }
+  .pb-table .tag-o{ color:var(--over-on); }
+  .pb-summary{ margin-top:16px; background:var(--card); border-radius:12px; padding:14px; }
+  .pb-summary h3{ margin:0 0 10px; font-size:16px; }
+  .pb-sum-row{ display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--line); font-size:15px; }
+  .pb-sum-row:last-child{ border-bottom:none; font-weight:800; }
 </style>
 </head>
 <body>
@@ -112,6 +134,24 @@
     </div>
   </div>
 
+  <!-- 個人別出勤簿ページ -->
+  <div id="page-personal">
+    <div class="pb-head">
+      <button class="pb-back" onclick="showMain()">← 戻る</button>
+      <span class="pb-title">個人別出勤簿</span>
+    </div>
+    <div class="pb-controls">
+      <select id="pb-name" onchange="renderPersonal()"></select>
+      <select id="pb-month" onchange="renderPersonal()"></select>
+    </div>
+    <table class="pb-table">
+      <thead><tr><th>日付</th><th>曜</th><th>出勤</th><th>早退</th><th>早出</th><th>残業</th></tr></thead>
+      <tbody id="pb-body"></tbody>
+    </table>
+    <div class="pb-summary" id="pb-summary"></div>
+  </div>
+
+  <div id="page-main">
   <div class="topbar">
     <h1>📋 出勤簿</h1>
     <div class="topright">
@@ -151,7 +191,9 @@
 
   <div class="footbar">
     <button class="navbtn next" onclick="confirmNext()">確定して送信 → 次へ ▶</button>
+    <button class="navbtn" style="background:#4f46e5;margin-top:8px;" onclick="showPersonal()">👤 個人別出勤簿</button>
   </div>
+  </div><!-- /page-main -->
 <script>
 const EK="kinmu_emps_v1", LK="kinmu_logs_v1", MK="kinmu_memo_v1", WKEY="kinmu_workdate_v1", PWR="kinmu_power_v1", SK="kinmu_sent_v1";
 const $=id=>document.getElementById(id);
@@ -436,6 +478,77 @@ function tick(){ const n=new Date();
   $("cd").textContent=`${fmtD(today())}（${wdOf(today())}）`;
 }
 renderPower(); render(); tick(); setInterval(tick,1000);
+
+// ── 個人別出勤簿 ──
+function showMain(){
+  document.getElementById('page-personal').classList.remove('active');
+  document.getElementById('page-main').style.display='';
+}
+function showPersonal(){
+  // 氏名セレクト構築
+  const sel=document.getElementById('pb-name');
+  const cur=sel.value;
+  sel.innerHTML=emps().map(n=>`<option value="${esc(n)}" ${n===cur?'selected':''}>${esc(n)}</option>`).join('');
+  if(!sel.value) sel.value=emps()[0]||'';
+  // デフォルトで「萩原 千恵」を選択
+  const chie=emps().find(n=>n.includes('千恵'));
+  if(chie && !cur) sel.value=chie;
+
+  // 月セレクト構築（ログにある月 + 当月）
+  const months=new Set();
+  months.add(today().slice(0,7));
+  logs().forEach(x=>{ if(x.date) months.add(x.date.slice(0,7)); });
+  const msel=document.getElementById('pb-month');
+  const curM=msel.value;
+  msel.innerHTML=[...months].sort().reverse().map(m=>`<option value="${m}" ${m===curM?'selected':''}>${m.replace('-','年')}月</option>`).join('');
+
+  document.getElementById('page-main').style.display='none';
+  document.getElementById('page-personal').classList.add('active');
+  renderPersonal();
+}
+function renderPersonal(){
+  const name=document.getElementById('pb-name').value;
+  const ym=document.getElementById('pb-month').value;
+  if(!name||!ym) return;
+  const [y,m]=ym.split('-').map(Number);
+  const days=new Date(y,m,0).getDate();
+  const myLogs=logs().filter(x=>x.name===name && x.date && x.date.startsWith(ym));
+  const byDate={};
+  myLogs.forEach(x=>{ (byDate[x.date]=byDate[x.date]||[]).push(x); });
+
+  let rows='', shukin=0, soutai=0, hayade=0, zangyou=0;
+  for(let d=1;d<=days;d++){
+    const date=`${ym}-${String(d).padStart(2,'0')}`;
+    const wd=new Date(date+'T00:00').getDay();
+    const wdStr='日月火水木金土'[wd];
+    const isWE=wd===0||wd===6;
+    const recs=byDate[date]||[];
+    const hasIn=recs.some(r=>r.type==='出勤');
+    const hasOut=recs.some(r=>r.type==='早退');
+    const eRec=recs.find(r=>r.type==='早出');
+    const oRec=recs.find(r=>r.type==='残業');
+    if(hasIn) shukin++;
+    if(hasOut) soutai++;
+    if(eRec) hayade+=parseFloat(eRec.hours)||0;
+    if(oRec) zangyou+=parseFloat(oRec.hours)||0;
+    rows+=`<tr class="${isWE?'weekend':''}">
+      <td>${m}/${d}</td>
+      <td>${wdStr}</td>
+      <td class="tag-in">${hasIn?'○':''}</td>
+      <td class="tag-out">${hasOut?'早退':''}</td>
+      <td class="tag-e">${eRec?(eRec.hours+'h'):''}</td>
+      <td class="tag-o">${oRec?(oRec.hours+'h'):''}</td>
+    </tr>`;
+  }
+  document.getElementById('pb-body').innerHTML=rows;
+  document.getElementById('pb-summary').innerHTML=`
+    <h3>${name} — ${m}月 集計</h3>
+    <div class="pb-sum-row"><span>出勤日数</span><span>${shukin}日</span></div>
+    <div class="pb-sum-row"><span>早退</span><span>${soutai}回</span></div>
+    <div class="pb-sum-row"><span>早出</span><span>${hayade}h</span></div>
+    <div class="pb-sum-row"><span>残業</span><span>${zangyou}h</span></div>
+  `;
+}
 </script>
 </body>
 </html>
