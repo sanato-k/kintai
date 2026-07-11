@@ -202,6 +202,9 @@
       <select id="pb-name" onchange="pbSelDate=null;renderPersonal()"></select>
       <select id="pb-month" onchange="pbSelDate=null;renderPersonal()"></select>
     </div>
+
+    <div id="future-btn-space-personal" style="min-height:50px; margin-bottom:12px;"></div>
+
     <table class="pb-table">
       <colgroup>
         <col class="pb-col-date"><col class="pb-col-wd"><col><col><col><col><col class="pb-col-amt">
@@ -236,6 +239,9 @@
       </select>
       <button class="mini add" id="bulk-toggle-btn" onclick="toggleBulkRates()">一括変更</button>
     </div>
+
+    <div id="future-btn-space-rates" style="min-height:50px; margin-bottom:12px;"></div>
+
     <div class="rate-card" id="rate-bulk" style="border:2px solid var(--accent); display:none;"></div>
     <div id="rates-list"></div>
     <button class="rate-export" onclick="exportRatesCSV()">単価をCSVで送信 ▶</button>
