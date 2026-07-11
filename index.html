@@ -124,6 +124,17 @@
   .pb-summary h3{ margin:0 0 10px; font-size:16px; }
   .pb-sum-row{ display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--line); font-size:15px; }
   .pb-sum-row:last-child{ border-bottom:none; font-weight:800; }
+  .pb-table tr.sel td{ outline:2px solid var(--accent); outline-offset:-2px; }
+  .pb-input{ display:none; background:var(--card); border-radius:12px; padding:14px; margin:10px 0; }
+  .pb-input.active{ display:block; }
+  .pb-input .pi-date{ font-weight:800; font-size:16px; margin-bottom:10px; text-align:center; }
+  .pb-input .pi-btns{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .pb-input button{ border:none; border-radius:10px; padding:14px; font-size:15px; font-weight:800; color:#fff; }
+  .pb-input .pi-in{ background:var(--in-on); }
+  .pb-input .pi-out{ background:var(--out-on); }
+  .pb-input .pi-e{ background:var(--early-on); }
+  .pb-input .pi-o{ background:var(--over-on); }
+  .pb-input .pi-clear{ grid-column:1/3; background:#94a3b8; }
 </style>
 </head>
 <body>
@@ -142,13 +153,23 @@
       <span class="pb-title">個人別出勤簿</span>
     </div>
     <div class="pb-controls">
-      <select id="pb-name" onchange="renderPersonal()"></select>
-      <select id="pb-month" onchange="renderPersonal()"></select>
+      <select id="pb-name" onchange="pbSelDate=null;renderPersonal()"></select>
+      <select id="pb-month" onchange="pbSelDate=null;renderPersonal()"></select>
     </div>
     <table class="pb-table">
       <thead><tr><th>日付</th><th>曜</th><th>出勤</th><th>早退</th><th>早出</th><th>残業</th></tr></thead>
       <tbody id="pb-body"></tbody>
     </table>
+    <div class="pb-input" id="pb-input">
+      <div class="pi-date" id="pi-date"></div>
+      <div class="pi-btns">
+        <button class="pi-in" id="pi-btn-in" onclick="pbToggle('出勤')">出勤</button>
+        <button class="pi-out" id="pi-btn-out" onclick="pbToggle('早退')">早退</button>
+        <button class="pi-e" id="pi-btn-e" onclick="pbHours('早出')">早出</button>
+        <button class="pi-o" id="pi-btn-o" onclick="pbHours('残業')">残業</button>
+        <button class="pi-clear" onclick="pbClearDay()">この日を全部消す</button>
+      </div>
+    </div>
     <div class="pb-summary" id="pb-summary"></div>
   </div>
 
@@ -489,6 +510,7 @@ function showMain(){
 function showPersonalFor(i){
   const name=emps()[i];
   if(!name) return;
+  pbSelDate=null;
   // 月セレクト構築
   const months=new Set();
   months.add(today().slice(0,7));
@@ -504,6 +526,7 @@ function showPersonalFor(i){
   renderPersonal();
 }
 function showPersonal(){
+  pbSelDate=null;
   // 氏名セレクト構築
   const sel=document.getElementById('pb-name');
   const cur=sel.value;
@@ -550,7 +573,7 @@ function renderPersonal(){
     if(hasOut) soutai++;
     if(eRec) hayade+=parseFloat(eRec.hours)||0;
     if(oRec) zangyou+=parseFloat(oRec.hours)||0;
-    rows+=`<tr class="${isWE?'weekend':''}">
+    rows+=`<tr class="${isWE?'weekend':''} ${date===pbSelDate?'sel':''}" onclick="pbSelectDay('${date}')">
       <td>${m}/${d}</td>
       <td>${wdStr}</td>
       <td class="tag-in">${hasIn?'○':''}</td>
@@ -560,6 +583,7 @@ function renderPersonal(){
     </tr>`;
   }
   document.getElementById('pb-body').innerHTML=rows;
+  pbRefreshInput();
   document.getElementById('pb-summary').innerHTML=`
     <h3>${name} — ${m}月 集計</h3>
     <div class="pb-sum-row"><span>出勤日数</span><span>${shukin}日</span></div>
@@ -567,6 +591,76 @@ function renderPersonal(){
     <div class="pb-sum-row"><span>早出</span><span>${hayade}h</span></div>
     <div class="pb-sum-row"><span>残業</span><span>${zangyou}h</span></div>
   `;
+}
+
+// ── 個人別ページ内での直接入力 ──
+let pbSelDate=null;
+function pbSelectDay(date){
+  pbSelDate = (pbSelDate===date) ? null : date;
+  renderPersonal();
+}
+function pbRecs(){
+  const name=document.getElementById('pb-name').value;
+  if(!pbSelDate) return [];
+  return logs().filter(x=>x.name===name && x.date===pbSelDate);
+}
+function pbRefreshInput(){
+  const box=document.getElementById('pb-input');
+  if(!pbSelDate){ box.classList.remove('active'); return; }
+  box.classList.add('active');
+  const [y,m,d]=pbSelDate.split('-').map(Number);
+  const wd='日月火水木金土'[new Date(pbSelDate+'T00:00').getDay()];
+  document.getElementById('pi-date').textContent=`${m}/${d}（${wd}）に入力`;
+  const recs=pbRecs();
+  const hasIn=recs.some(r=>r.type==='出勤'), hasOut=recs.some(r=>r.type==='早退');
+  const eRec=recs.find(r=>r.type==='早出'), oRec=recs.find(r=>r.type==='残業');
+  document.getElementById('pi-btn-in').textContent = hasIn?'出勤 ✓':'出勤';
+  document.getElementById('pi-btn-out').textContent = hasOut?'早退 ✓':'早退';
+  document.getElementById('pi-btn-e').textContent = eRec?`早出 ${eRec.hours}h`:'早出';
+  document.getElementById('pi-btn-o').textContent = oRec?`残業 ${oRec.hours}h`:'残業';
+}
+function pbPunch(type,hours){
+  const name=document.getElementById('pb-name').value;
+  const date=pbSelDate;
+  if(!name||!date) return;
+  const n=new Date(); const time=`${pad(n.getHours())}:${pad(n.getMinutes())}`;
+  const arr=logs();
+  const i=arr.findIndex(x=>x.date===date && x.name===name && x.type===type);
+  const rec={date,time,name,type,hours:hours||"",ts:Date.now()};
+  if(i>=0) arr[i]=rec; else arr.unshift(rec);
+  set(LK,arr);
+  clearSent(date);
+  renderPersonal();
+}
+function pbToggle(type){
+  const recs=pbRecs();
+  const exists=recs.some(r=>r.type===type);
+  if(exists){
+    const name=document.getElementById('pb-name').value;
+    set(LK, logs().filter(x=>!(x.date===pbSelDate && x.name===name && x.type===type)));
+    clearSent(pbSelDate);
+    renderPersonal();
+  }else{
+    pbPunch(type);
+  }
+}
+function pbHours(type){
+  const recs=pbRecs();
+  const rec=recs.find(r=>r.type===type);
+  uiPrompt(`${type}時間（h）`, rec?rec.hours:"1", (h)=>{
+    const v=parseFloat(h);
+    if(isNaN(v)||v<=0){ uiAlert("数値を入れてください"); return; }
+    pbPunch(type,v);
+  }, true);
+}
+function pbClearDay(){
+  const name=document.getElementById('pb-name').value;
+  if(!name||!pbSelDate) return;
+  uiConfirm(`${pbSelDate} の${name}のデータを全部消しますか？`, ()=>{
+    set(LK, logs().filter(x=>!(x.date===pbSelDate && x.name===name)));
+    clearSent(pbSelDate);
+    renderPersonal();
+  });
 }
 </script>
 </body>
