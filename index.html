@@ -630,7 +630,12 @@ function tick(){ const n=new Date();
 }
 tick(); setInterval(tick,1000);
 syncPullAll().finally(()=>{ renderPower(); render(); });
-setInterval(()=>{ syncPullAll().then(ok=>{ if(ok) render(); }); }, 15000); // 15秒ごとに他端末の更新を取り込む
+function renderCurrentPage(){
+  if(document.getElementById('page-rates').classList.contains('active')) renderRates();
+  else if(document.getElementById('page-personal').classList.contains('active')) renderPersonal();
+  else render();
+}
+setInterval(()=>{ syncPullAll().then(ok=>{ if(ok) renderCurrentPage(); }); }, 15000); // 15秒ごとに他端末の更新を取り込む
 
 // ── 個人別出勤簿 ──
 function showMain(){
@@ -638,6 +643,8 @@ function showMain(){
   document.getElementById('page-rates').classList.remove('active');
   document.getElementById('page-main').style.display='';
   syncPageNavSel('main');
+  render();
+  syncPullAll().then(ok=>{ if(ok) render(); });
 }
 function syncPageNavSel(val){
   const sel=document.querySelector('.page-nav-sel');
@@ -690,6 +697,7 @@ function showPersonal(){
   document.getElementById('page-personal').classList.add('active');
   syncPageNavSel('personal');
   renderPersonal();
+  syncPullAll().then(ok=>{ if(ok) renderPersonal(); });
 }
 function renderPersonal(){
   const name=document.getElementById('pb-name').value;
@@ -857,6 +865,7 @@ function showRates(){
   document.getElementById('page-rates').classList.add('active');
   syncPageNavSel('rates');
   renderRates();
+  syncPullAll().then(ok=>{ if(ok) renderRates(); });
 }
 function renderRates(){
   const cfg=RATE_CATS[rateTab];
