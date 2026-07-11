@@ -269,7 +269,11 @@
   <div class="week" id="week"></div>
 
   <div class="footbar">
-    <button class="navbtn next" onclick="confirmNext()">確定して送信 → 次へ ▶</button>
+    <div style="display:flex; gap:8px;">
+      <button class="navbtn" style="background:var(--accent); color:#fff;" onclick="confirmDay()">確定</button>
+      <button class="navbtn next" onclick="sendDay()">送信</button>
+      <button class="navbtn" style="background:var(--danger); color:#fff;" onclick="clearDay()">削除</button>
+    </div>
   </div>
   </div><!-- /page-main -->
 <script>
@@ -436,11 +440,15 @@ function punch(name,type,hours){
   render();  // 自動では進まない。確定ボタンで次の日へ。
 }
 function speak(msg){ try{ const u=new SpeechSynthesisUtterance(msg); u.lang="ja-JP"; speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){} }
-function confirmNext(){
+function confirmDay(){
   const w=workDate();
-  const go=()=>{ speak("送信しました"); exportCSV(true); if(dayHasPunch(w)) markSent(w); if(w<today()) setWork(addDays(w,1)); render(); };
-  if(!dayHasPunch(w)) uiConfirm(`${fmtD(w)} は打刻がありません。それでも確定して送信しますか？`, go);
+  const go=()=>{ speak("確定しました"); if(dayHasPunch(w)) markSent(w); if(w<today()) setWork(addDays(w,1)); render(); };
+  if(!dayHasPunch(w)) uiConfirm(`${fmtD(w)} は打刻がありません。それでも確定しますか？`, go);
   else go();
+}
+function sendDay(){
+  exportCSV(true);
+  speak("送信しました");
 }
 function askHours(name,type){
   uiPrompt(`${name} の${type}時間（h）`, "1", (h)=>{
