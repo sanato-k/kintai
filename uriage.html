@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="売上入力">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>売上入力</title>
 <style>
   :root{
@@ -26,6 +29,16 @@
   .nav{ display:flex; gap:8px; margin-bottom:12px; }
   .navbtn{ flex:1; border:none; border-radius:12px; padding:12px 6px; font-weight:800; font-size:15px; }
   .navbtn.now{ background:var(--accent); color:#fff; }
+  .daterow{ display:flex; gap:8px; align-items:stretch; margin-bottom:6px; }
+  .daterow .datebar{ flex:1; margin-bottom:0; }
+  .daterow .navbtn.now{ flex:0 0 76px; margin:0; }
+  .wxpair{ display:flex; gap:12px; padding:6px 2px; }
+  .wxcell{ flex:1; display:flex; align-items:center; gap:8px; min-width:0; }
+  .wxcell .wxlbl{ font-weight:700; font-size:15px; white-space:nowrap; }
+  .wxcell input{ flex:1; min-width:0; border:1px solid var(--line); border-radius:10px; padding:10px; font-size:16px; text-align:right; }
+  .memorow{ display:flex; align-items:center; gap:10px; margin-top:8px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:8px 12px; }
+  .memorow .memolbl{ font-weight:700; font-size:15px; white-space:nowrap; }
+  .memorow input{ flex:1; min-width:0; border:1px solid var(--line); border-radius:10px; padding:10px; font-size:16px; }
   .fields{ background:var(--card); border:1px solid var(--line); border-radius:14px;
         padding:6px 12px; box-shadow:0 1px 3px rgba(20,30,80,.05); }
   .frow{ display:flex; align-items:center; gap:10px; padding:8px 2px; border-bottom:1px solid var(--line); }
@@ -82,13 +95,17 @@
     <div class="clock"><div class="d" id="cd"></div><div class="t" id="ct"></div></div>
   </div>
 
-  <div class="datebar" onclick="openPicker()">📅 <input type="date" id="wd" min="2025-12-01" max="2026-04-30" onchange="manualDate()"></div>
-  <div class="dnote" id="dnote"></div>
-  <div class="nav">
+  <div class="daterow">
+    <div class="datebar" onclick="openPicker()">📅 <input type="date" id="wd" min="2025-12-01" max="2026-04-30" onchange="manualDate()"></div>
     <button class="navbtn now" onclick="goToday()">今日</button>
   </div>
+  <div class="dnote" id="dnote"></div>
+
+  <div class="fields" id="wxfields"></div>
 
   <div class="fields" id="fields"></div>
+
+  <div class="memorow"><span class="memolbl">メモ</span><input id="f_メモ" type="text" placeholder="メモ（任意）"></div>
 
   <div class="total"><span>当日売上（現金＋尾瀬＋paypay＋クレカ）</span><span class="amt" id="total">¥0</span></div>
 
@@ -131,6 +148,64 @@ const slash=s=>s.replace(/-/g,"/");   // 2026-04-08 -> 2026/04/08 (CSV/売上帳
 const yen=n=>"¥"+Math.round(n||0).toLocaleString();
 const inSeason=s=> s>=SEASON_MIN && s<=SEASON_MAX;
 
+// ── 片品村の天気取得(Open-Meteo, APIキー不要) ──
+const LAT=36.7876, LON=139.2264;   // 群馬県片品村
+function wxText(c){
+  if(c===0||c===1) return "晴れ";
+  if(c===2) return "晴れ時々曇り";
+  if(c===3) return "曇り";
+  if(c===45||c===48) return "霧";
+  if(c>=51&&c<=57) return "霧雨";
+  if((c>=61&&c<=67)||(c>=80&&c<=82)) return "雨";
+  if((c>=71&&c<=77)||c===85||c===86) return "雪";
+  if(c>=95) return "雷雨";
+  return "";
+}
+function fetchWeather(dateStr){
+  const wxEl=$("f_天気"), tpEl=$("f_温度");
+  if(!wxEl||!tpEl) return;
+  wxEl.placeholder="取得中…";
+  const daysAgo=(new Date(today()+"T00:00")-new Date(dateStr+"T00:00"))/86400000;
+  const base=daysAgo>5 ? "https://archive-api.open-meteo.com/v1/archive"
+                       : "https://api.open-meteo.com/v1/forecast";
+  const url=`${base}?latitude=${LAT}&longitude=${LON}&start_date=${dateStr}&end_date=${dateStr}`
+           +`&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Asia%2FTokyo`;
+  fetch(url).then(r=>r.json()).then(j=>{
+    const d=j&&j.daily; if(!d){ wxEl.placeholder="天気(取得できず)"; return; }
+    if(workDate()!==dateStr) return;   // 別の日に切り替わっていたら反映しない
+    const code=d.weathercode?d.weathercode[0]:null;
+    const tmax=d.temperature_2m_max?d.temperature_2m_max[0]:null;
+    const tmin=d.temperature_2m_min?d.temperature_2m_min[0]:null;
+    if(wxEl.value.trim()==="" && code!=null){ wxEl.value=wxText(code); }
+    if(tpEl.value.trim()==="" && tmax!=null){
+      tpEl.value = Math.round(tmax) + (tmin!=null ? "/"+Math.round(tmin) : "");
+    }
+    wxEl.placeholder="天気";
+  }).catch(()=>{ wxEl.placeholder="天気(取得できず)"; });
+}
+// このデバイスに未保存の日を、PC受け取り役(/lookup)経由でOneDriveのCSVから探して反映
+function fetchFromPC(dateStr){
+  fetch(`/lookup?date=${dateStr}`).then(r=>r.json()).then(j=>{
+    if(!j||!j.ok||!j.found) return;
+    if(workDate()!==dateStr) return;        // 別の日に切り替わっていたら反映しない
+    if(Object.keys(days()[dateStr]||{}).length>0) return;   // その間に保存/編集されていたら上書きしない
+    const d=j.data||{};
+    const all=days(); all[dateStr]=d; set(DK,all);
+    render();
+  }).catch(()=>{});
+}
+function beep(){
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext; const a=new AC();
+    const o=a.createOscillator(), g=a.createGain();
+    o.connect(g); g.connect(a.destination);
+    o.type="square"; o.frequency.value=2500;
+    g.gain.setValueAtTime(0.2,a.currentTime);
+    o.start(); o.stop(a.currentTime+0.09);
+    setTimeout(()=>{ try{a.close();}catch(e){} },200);
+  }catch(e){}
+}
+
 // ── 画面内モーダル ──
 function closeModal(){ $("modal").style.display="none"; $("m-input").style.display="none"; $("m-btns").innerHTML=""; }
 function uiAlert(msg, cb){
@@ -169,6 +244,10 @@ function clearSent(d){ set(SK, load(SK,[]).filter(x=>x!==d)); }
 function curVals(){
   const o={};
   ITEMS.forEach(([k])=>{ const v=$("f_"+k).value.trim(); o[k]=v===""?0:Number(v); });
+  const wxEl=$("f_天気"), tpEl=$("f_温度");
+  o.天気 = wxEl ? wxEl.value.trim() : "";
+  o.温度 = tpEl ? tpEl.value.trim() : "";
+  const meEl=$("f_メモ"); o.メモ = meEl ? meEl.value.trim() : "";
   return o;
 }
 function recalc(){
@@ -197,12 +276,24 @@ function render(){
 
   // 入力欄(この日の保存済み値を反映)
   const cur=days()[w]||{};
+  const wxV=(cur.天気!=null)?String(cur.天気).replace(/"/g,"&quot;"):"";
+  const tpV=(cur.温度!=null&&cur.温度!=="")?cur.温度:"";
+  $("wxfields").innerHTML=
+    `<div class="wxpair">`+
+      `<div class="wxcell"><span class="wxlbl">天気</span><input id="f_天気" type="text" value="${wxV}" placeholder="天気"></div>`+
+      `<div class="wxcell"><span class="wxlbl">気温</span><input id="f_温度" type="text" value="${tpV}" placeholder="—"></div>`+
+    `</div>`;
+  if($("f_メモ")) $("f_メモ").value=(cur.メモ!=null)?cur.メモ:"";
   $("fields").innerHTML=ITEMS.map(([k,label])=>{
     const v=(cur[k]!=null)?cur[k]:"";
     return `<div class="frow"><span class="lbl">${label}</span>
       <input id="f_${k}" type="number" inputmode="numeric" value="${v}" placeholder="0" oninput="recalc()"></div>`;
   }).join("");
   recalc();
+  // 天気・気温が未入力なら、その売上日の天気を自動取得
+  if((cur.天気==null||cur.天気==="") && (cur.温度==null||cur.温度==="")){ fetchWeather(w); }
+  // このデバイスに保存が無い日は、PC(OneDrive)に既に送信済みのデータが無いか探して反映
+  if(Object.keys(cur).length===0){ fetchFromPC(w); }
 
   // 入力済みの日一覧(日付降順)
   const all=days();
@@ -225,15 +316,19 @@ function render(){
 function buildCSV(){
   const all=days();
   const keys=Object.keys(all).sort();
-  let csv="日付,現金,尾瀬だっペイ,paypay,クレジットカード,自販機,チューンナップ,レンタル\n";
+  let csv="日付,天気,温度,現金,尾瀬だっペイ,paypay,クレジットカード,自販機,チューンナップ,レンタル,メモ\n";
   keys.forEach(d=>{
     const o=all[d];
-    const row=[slash(d)].concat(ITEMS.map(([k])=>Number(o[k])||0));
+    const wx=(o.天気!=null)?String(o.天気).replace(/,/g,"").replace(/[\r\n]/g,""):"";
+    const tp=(o.温度!=null)?String(o.温度).replace(/,/g,"").replace(/[\r\n]/g,""):"";
+    const me=(o.メモ!=null)?String(o.メモ).replace(/,/g,"，").replace(/[\r\n]/g," "):"";
+    const row=[slash(d),wx,tp].concat(ITEMS.map(([k])=>Number(o[k])||0)).concat([me]);
     csv+=row.join(",")+"\n";
   });
   return csv;
 }
 function sendCSV(){
+  beep();
   const all=days();
   if(Object.keys(all).length===0){ uiAlert("送信するデータがありません。先に保存してください"); return; }
   const csv=buildCSV();
@@ -243,6 +338,13 @@ function sendCSV(){
   const blob=new Blob([bom+csv],{type:"text/csv;charset=utf-8"});
   const file=new File([blob],fname,{type:"text/csv"});
   const done=()=>{ markAllSent(); render(); };
+  if(location.protocol==="http:"){
+    fetch("/save",{method:"POST",headers:{"Content-Type":"text/csv;charset=utf-8"},body:bom+csv})
+      .then(r=>{ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
+      .then(()=>{ done(); uiAlert("PCに送信しました"); })
+      .catch(e=>{ uiAlert("PCに送れませんでした。PCが起動しているか確認してください。\n"+e.message); });
+    return;
+  }
   if(navigator.canShare && navigator.canShare({files:[file]})){
     navigator.share({files:[file],title:fname}).then(done).catch(()=>{});
   }else{
