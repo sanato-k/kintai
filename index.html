@@ -115,9 +115,13 @@
   .pb-title{ font-size:20px; font-weight:800; }
   .pb-controls{ display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
   .pb-controls select{ flex:1; border:1px solid var(--line); border-radius:10px; padding:10px; font-size:15px; background:var(--card); color:var(--text); }
-  .pb-table{ width:100%; border-collapse:collapse; font-size:14px; }
-  .pb-table th{ background:var(--accent); color:#fff; padding:8px 6px; text-align:center; }
-  .pb-table td{ padding:7px 6px; text-align:center; border-bottom:1px solid var(--line); }
+  .pb-table{ width:100%; border-collapse:collapse; font-size:14px; table-layout:fixed; }
+  .pb-table th{ background:var(--accent); color:#fff; padding:8px 4px; text-align:center; border-right:1px solid rgba(255,255,255,.35); }
+  .pb-table th:last-child{ border-right:none; }
+  .pb-table td{ padding:7px 4px; text-align:center; border-bottom:1px solid var(--line); border-right:1px solid var(--line); }
+  .pb-table td:last-child{ border-right:none; }
+  .pb-table col.pb-col-date, .pb-table col.pb-col-wd{ width:11%; }
+  .pb-table col.pb-col-amt{ width:19%; }
   .pb-table tr.saturday td{ background:#eaf2ff; }
   .pb-table tr.sunday td{ background:#ffeef0; }
   .pb-table tr.holiday td{ background:#ffeef0; }
@@ -127,6 +131,7 @@
   .pb-table .tag-out{ color:var(--out-on); }
   .pb-table .tag-e{ color:var(--early-on); }
   .pb-table .tag-o{ color:var(--over-on); }
+  .pb-table .tag-amt{ font-weight:800; }
   .pb-summary{ margin-top:16px; background:var(--card); border-radius:12px; padding:14px; }
   .pb-summary h3{ margin:0 0 10px; font-size:16px; }
   .pb-sum-row{ display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--line); font-size:15px; }
@@ -189,7 +194,10 @@
       <select id="pb-month" onchange="pbSelDate=null;renderPersonal()"></select>
     </div>
     <table class="pb-table">
-      <thead><tr><th>日付</th><th>曜</th><th>出勤</th><th>早退</th><th>早出</th><th>残業</th></tr></thead>
+      <colgroup>
+        <col class="pb-col-date"><col class="pb-col-wd"><col><col><col><col><col class="pb-col-amt">
+      </colgroup>
+      <thead><tr><th>日付</th><th>曜</th><th>出勤</th><th>早退</th><th>早出</th><th>残業</th><th>金額</th></tr></thead>
       <tbody id="pb-body"></tbody>
     </table>
     <div class="pb-input" id="pb-input">
@@ -751,6 +759,8 @@ function renderPersonal(){
   const myLogs=logs().filter(x=>x.name===name && x.date && x.date.startsWith(ym));
   const byDate={};
   myLogs.forEach(x=>{ (byDate[x.date]=byDate[x.date]||[]).push(x); });
+  const isKyuyo=empCat(name)==='kyuyo';
+  const kRate=isKyuyo?(ratesOf('kyuyo')[name]||{}):null;
 
   let rows='', shukin=0, soutai=0, hayade=0, zangyou=0;
   for(let d=1;d<=days;d++){
@@ -768,6 +778,16 @@ function renderPersonal(){
     if(hasOut) soutai++;
     if(eRec) hayade+=parseFloat(eRec.hours)||0;
     if(oRec) zangyou+=parseFloat(oRec.hours)||0;
+    let amtTxt='';
+    if(isKyuyo && (hasIn||hasOut||eRec||oRec)){
+      const isWknd = isHol || wd===6 || wd===0;
+      let amt=0;
+      if(hasIn) amt += Number((isWknd?kRate.doniti:kRate.heijitsu))||0;
+      if(hasOut) amt -= Number(kRate.sotai)||0;
+      if(eRec) amt += (parseFloat(eRec.hours)||0) * (Number(kRate.hayade)||0);
+      if(oRec) amt += (parseFloat(oRec.hours)||0) * (Number(kRate.hayade)||0);
+      amtTxt = fmtNum(amt);
+    }
     rows+=`<tr class="${dayCls} ${date===pbSelDate?'sel':''}" onclick="pbSelectDay('${date}')">
       <td>${m}/${d}</td>
       <td>${wdStr}</td>
@@ -775,6 +795,7 @@ function renderPersonal(){
       <td class="tag-out">${hasOut?'早退':''}</td>
       <td class="tag-e">${eRec?(eRec.hours+'h'):''}</td>
       <td class="tag-o">${oRec?(oRec.hours+'h'):''}</td>
+      <td class="tag-amt">${amtTxt}</td>
     </tr>`;
   }
   document.getElementById('pb-body').innerHTML=rows;
