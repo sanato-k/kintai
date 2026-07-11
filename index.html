@@ -257,7 +257,14 @@
       <button style="flex:0 0 64px; border:none; border-radius:10px; font-weight:800;">C</button>
       <button style="flex:0 0 64px; border:none; border-radius:10px; font-weight:800;">D</button>
       <button style="flex:0 0 64px; border:none; border-radius:10px; font-weight:800;">E</button>
-      <button style="flex:0 0 64px; border:none; border-radius:10px; font-weight:800;">給与賃金</button>
+      <div style="flex:0 0 64px; position:relative;">
+        <button style="width:100%; height:100%; border:none; border-radius:10px; font-weight:800;" onclick="toggleFMenu(event)">給与賃金</button>
+        <div id="f-menu" style="display:none; position:absolute; left:100%; top:0; margin-left:6px; background:#fff; border:1px solid var(--line); border-radius:10px; padding:6px; z-index:20; flex-direction:column; gap:6px; white-space:nowrap; box-shadow:0 4px 16px rgba(20,30,80,.15);">
+          <button style="border:none; border-radius:8px; padding:10px 14px; font-weight:800;" onclick="pageNavGo('main');toggleFMenu()">出勤簿</button>
+          <button style="border:none; border-radius:8px; padding:10px 14px; font-weight:800;" onclick="pageNavGo('personal');toggleFMenu()">個人出勤簿</button>
+          <button style="border:none; border-radius:8px; padding:10px 14px; font-weight:800;" onclick="pageNavGo('rates');toggleFMenu()">単価</button>
+        </div>
+      </div>
       <button style="flex:0 0 64px; border:none; border-radius:10px; font-weight:800;">G</button>
       <button style="flex:0 0 64px; border:none; border-radius:10px; font-weight:800;">H</button>
       <button style="flex:0 0 64px; border:none; border-radius:10px; font-weight:800;">I</button>
@@ -742,6 +749,16 @@ function pageNavGo(val){
   else if(val==='personal') showPersonal();
   else if(val==='rates') showRates();
 }
+function toggleFMenu(ev){
+  if(ev) ev.stopPropagation();
+  const m=document.getElementById('f-menu');
+  if(!m) return;
+  m.style.display = (m.style.display==='flex') ? 'none' : 'flex';
+}
+document.addEventListener('click',(ev)=>{
+  const m=document.getElementById('f-menu');
+  if(m && m.style.display==='flex' && !m.contains(ev.target)) m.style.display='none';
+});
 // 個人出勤簿：区分プルダウンの選択を端末に記憶
 const PBCAT_KEY="kinmu_pbcat_v1";
 // 単価区分に応じて氏名プルダウンを絞り込んで構築
