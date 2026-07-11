@@ -47,6 +47,8 @@
   .footbar .navbtn{ width:100%; }
   .sec-head{ display:flex; justify-content:space-between; align-items:center; margin:10px 2px 8px; }
   .sec-head .lbl{ color:#5b639a; font-weight:700; }
+  .page-nav-sel{ border:1px solid var(--line); border-radius:10px; padding:8px 10px; font-size:15px;
+        font-weight:800; color:var(--text); background:var(--card); }
   .mini{ border:none; border-radius:10px; padding:8px 14px; font-weight:700; font-size:14px; }
   .mini.add{ background:#86efac; color:#14532d; } .mini.rm{ background:#fcd34d; color:#713f12; }
   .emp{ background:var(--card); border:1px solid var(--line); border-radius:14px;
@@ -231,7 +233,11 @@
   </div>
 
   <div class="sec-head">
-    <span class="lbl">従業員</span>
+    <select class="page-nav-sel" onchange="pageNavGo(this.value)">
+      <option value="main" selected>従業員</option>
+      <option value="personal">個人出勤簿</option>
+      <option value="rates">単価設定</option>
+    </select>
     <span>
       <button class="mini add" onclick="addEmp()">＋ 追加</button>
       <button class="mini rm" id="rmbtn" onclick="rmEmp()">✏ 削除</button>
@@ -600,6 +606,16 @@ function showMain(){
   document.getElementById('page-personal').classList.remove('active');
   document.getElementById('page-rates').classList.remove('active');
   document.getElementById('page-main').style.display='';
+  syncPageNavSel('main');
+}
+function syncPageNavSel(val){
+  const sel=document.querySelector('.page-nav-sel');
+  if(sel) sel.value=val;
+}
+function pageNavGo(val){
+  if(val==='main') showMain();
+  else if(val==='personal') showPersonal();
+  else if(val==='rates') showRates();
 }
 function showPersonalFor(i){
   const name=emps()[i];
@@ -617,6 +633,7 @@ function showPersonalFor(i){
   sel.value=name;
   document.getElementById('page-main').style.display='none';
   document.getElementById('page-personal').classList.add('active');
+  syncPageNavSel('personal');
   renderPersonal();
 }
 function showPersonal(){
@@ -640,6 +657,7 @@ function showPersonal(){
 
   document.getElementById('page-main').style.display='none';
   document.getElementById('page-personal').classList.add('active');
+  syncPageNavSel('personal');
   renderPersonal();
 }
 function renderPersonal(){
@@ -801,6 +819,7 @@ function showRates(){
   document.getElementById('page-main').style.display='none';
   document.getElementById('page-personal').classList.remove('active');
   document.getElementById('page-rates').classList.add('active');
+  syncPageNavSel('rates');
   renderRates();
 }
 function renderRates(){
