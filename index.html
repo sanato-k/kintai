@@ -861,7 +861,7 @@ function showRates(){
 function renderRates(){
   const cfg=RATE_CATS[rateTab];
   document.getElementById('rate-tab-sel').value=rateTab;
-  const gridCls = cfg.fields.length===1 ? 'rate-grid g1' : 'rate-grid';
+  const gridCls = 'rate-grid bulk-row';
 
   // 一括入力カード（ここに数字を入れて「変更」を押すと全員に反映）
   const bulkFields=cfg.fields.map(([k,label])=>`
