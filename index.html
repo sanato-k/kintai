@@ -270,7 +270,7 @@
 
   <div class="footbar">
     <div style="display:flex; gap:8px;">
-      <button class="navbtn" style="background:var(--accent); color:#fff;" onclick="confirmDay()">確定</button>
+      <button class="navbtn" style="background:var(--accent); color:#fff;" onclick="confirmDay(event)">確定</button>
       <button class="navbtn next" onclick="sendDay(event)">送信</button>
       <button class="navbtn" style="background:var(--danger); color:#fff;" onclick="clearDay()">削除</button>
     </div>
@@ -440,9 +440,10 @@ function punch(name,type,hours){
   render();  // 自動では進まない。確定ボタンで次の日へ。
 }
 function speak(msg){ try{ const u=new SpeechSynthesisUtterance(msg); u.lang="ja-JP"; speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){} }
-function confirmDay(){
+function confirmDay(ev){
   const w=workDate();
-  const go=()=>{ speak("確定しました"); if(dayHasPunch(w)) markSent(w); if(w<today()) setWork(addDays(w,1)); render(); };
+  const go=()=>{ if(dayHasPunch(w)) markSent(w); if(w<today()) setWork(addDays(w,1)); render(); };
+  クリック作動(ev && ev.currentTarget);
   if(!dayHasPunch(w)) uiConfirm(`${fmtD(w)} は打刻がありません。それでも確定しますか？`, go);
   else go();
 }
