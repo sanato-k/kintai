@@ -152,6 +152,11 @@
         background:var(--card); color:var(--text); width:100%; }
   .rate-export{ width:100%; border:none; border-radius:12px; padding:14px; font-size:16px;
         font-weight:800; color:#fff; background:var(--send); margin-top:8px; }
+  .rate-tabs{ display:flex; gap:6px; margin-bottom:12px; }
+  .rate-tabs button{ flex:1; border:none; border-radius:10px; padding:11px 4px; font-size:14px;
+        font-weight:800; color:#5b639a; background:#e2e8f0; }
+  .rate-tabs button.on{ background:var(--accent); color:#fff; }
+  .rate-grid.g1{ grid-template-columns:1fr; }
 </style>
 </head>
 <body>
@@ -195,6 +200,11 @@
     <div class="pb-head">
       <button class="pb-back" onclick="showMain()">← 戻る</button>
       <span class="pb-title">単価設定</span>
+    </div>
+    <div class="rate-tabs" id="rate-tabs">
+      <button onclick="setRateTab('kyuyo')">給与賃金</button>
+      <button onclick="setRateTab('senju')">専従者給与</button>
+      <button onclick="setRateTab('other')">その他</button>
     </div>
     <div id="rates-list"></div>
     <button class="rate-export" onclick="exportRatesCSV()">単価をCSVで送信 ▶</button>
@@ -739,17 +749,37 @@ function pbClearDay(){
   });
 }
 
-// ── 単価設定 ──
-const RK="kinmu_rates_v1";
-const RATE_FIELDS=[
-  ["heijitsu","日給(平日)"],
-  ["doniti","土日"],
-  ["sotai","早退(控除)"],
-  ["hayade","早出/残業"],
-  ["season","シーズン給"],
-  ["kikin","基金年金"],
-];
-const rates=()=>load(RK,{});
+// ── 単価設定（3カテゴリ：給与賃金 / 専従者給与 / その他） ──
+const RATE_CATS={
+  kyuyo:{ key:"kinmu_rates_v1", label:"給与賃金", fname:"tanka",
+    fields:[
+      ["heijitsu","日給(平日)"],
+      ["doniti","土日"],
+      ["sotai","早退(控除)"],
+      ["hayade","早出/残業"],
+      ["season","シーズン給"],
+      ["kikin","基金年金"],
+    ]},
+  senju:{ key:"kinmu_rates_senju_v1", label:"専従者給与", fname:"senju",
+    fields:[
+      ["gekkyu","月給"],
+    ]},
+  other:{ key:"kinmu_rates_other_v1", label:"その他", fname:"sonota",
+    fields:[
+      ["nikkyu","日給"],
+      ["gekkyu","月給"],
+      ["nenkyu","年休"],
+      ["kikin","基金"],
+      ["junbi","準備"],
+      ["owari","終わり"],
+    ]},
+};
+let rateTab="kyuyo";
+const ratesOf=(cat)=>load(RATE_CATS[cat].key,{});
+function setRateTab(cat){
+  rateTab=cat;
+  renderRates();
+}
 function showRates(){
   document.getElementById('page-main').style.display='none';
   document.getElementById('page-personal').classList.remove('active');
@@ -757,10 +787,15 @@ function showRates(){
   renderRates();
 }
 function renderRates(){
-  const all=rates();
+  const cfg=RATE_CATS[rateTab];
+  document.getElementById('rate-tabs').innerHTML = Object.entries(RATE_CATS).map(([k,c])=>
+    `<button class="${k===rateTab?'on':''}" onclick="setRateTab('${k}')">${c.label}</button>`
+  ).join("");
+  const all=ratesOf(rateTab);
+  const gridCls = cfg.fields.length===1 ? 'rate-grid g1' : 'rate-grid';
   document.getElementById('rates-list').innerHTML = emps().map(name=>{
     const r=all[name]||{};
-    const fields=RATE_FIELDS.map(([k,label])=>`
+    const fields=cfg.fields.map(([k,label])=>`
       <div class="rate-field">
         <label>${label}</label>
         <input type="number" inputmode="decimal" value="${r[k]!=null?r[k]:''}"
@@ -768,27 +803,28 @@ function renderRates(){
       </div>`).join("");
     return `<div class="rate-card">
       <div class="rc-name">${esc(name)}</div>
-      <div class="rate-grid">${fields}</div>
+      <div class="${gridCls}">${fields}</div>
     </div>`;
   }).join("");
 }
 function setRate(name,key,value){
-  const all=rates();
+  const all=ratesOf(rateTab);
   if(!all[name]) all[name]={};
   all[name][key] = value===""?null:parseFloat(value);
-  set(RK,all);
+  set(RATE_CATS[rateTab].key,all);
 }
 function exportRatesCSV(){
-  const all=rates();
-  let csv="氏名,日給(平日),土日,早退(控除),早出/残業,シーズン給,基金年金\n";
+  const cfg=RATE_CATS[rateTab];
+  const all=ratesOf(rateTab);
+  let csv="氏名,"+cfg.fields.map(([,label])=>label).join(",")+"\n";
   emps().forEach(name=>{
     const r=all[name]||{};
-    const row=[name,...RATE_FIELDS.map(([k])=>r[k]!=null?r[k]:"")];
+    const row=[name,...cfg.fields.map(([k])=>r[k]!=null?r[k]:"")];
     csv+=row.map(qcsv).join(",")+"\n";
   });
   const bom="﻿";
   const blob=new Blob([bom+csv],{type:"text/csv;charset=utf-8"});
-  const fname=`tanka_${today().replace(/-/g,"")}.csv`;
+  const fname=`${cfg.fname}_${today().replace(/-/g,"")}.csv`;
   const file=new File([blob],fname,{type:"text/csv"});
   if(navigator.canShare && navigator.canShare({files:[file]})){
     navigator.share({files:[file],title:fname}).catch(()=>{});
