@@ -319,7 +319,32 @@ function isHoliday(dateStr){
 }
 
 const load=(k,d)=>{ try{return JSON.parse(localStorage.getItem(k))??d;}catch(e){return d;} };
-const set=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const set=(k,v)=>{ localStorage.setItem(k,JSON.stringify(v)); syncPush(k,v); };
+
+// ── 全端末同期（Cloudflare Worker経由） ──
+const SYNC_URL="https://kintai-sync.manasarowaru.workers.dev";
+const SYNC_KEY="kintai2026sync";
+const SYNC_KEYS=["kinmu_emps_v1","kinmu_logs_v1","kinmu_memo_v1","kinmu_power_v1","kinmu_sent_v1",
+  "kinmu_rates_v1","kinmu_rates_senju_v1","kinmu_rates_other_v1","kinmu_empcat_v1"];
+function syncPush(k,v){
+  if(!SYNC_KEYS.includes(k)) return;
+  fetch(`${SYNC_URL}/set?k=${k}`,{
+    method:"POST",
+    headers:{"Content-Type":"application/json","X-Upload-Key":SYNC_KEY},
+    body:JSON.stringify(v),
+  }).catch(()=>{}); // オフライン時は無視（次回のpullで整合）
+}
+async function syncPullAll(){
+  try{
+    const res=await fetch(`${SYNC_URL}/getall`,{cache:"no-store"});
+    if(!res.ok) return false;
+    const data=await res.json();
+    SYNC_KEYS.forEach(k=>{
+      if(data[k]!=null) localStorage.setItem(k,JSON.stringify(data[k]));
+    });
+    return true;
+  }catch(e){ return false; }
+}
 const emps=()=>load(EK,DEF);
 const logs=()=>load(LK,[]);
 const pad=n=>String(n).padStart(2,"0");
@@ -558,7 +583,7 @@ function render(){
     </div>`;
   }).join("") || `<div class="logrow"><span class="tm">この日の打刻はまだありません</span></div>`;
   // 備考
-  $("memo").value=(load(MK,{})[w])||"";
+  if(document.activeElement!==$("memo")) $("memo").value=(load(MK,{})[w])||"";
   // 1週間チェック（当日から過去7日）
   let html="";
   for(let i=0;i<7;i++){
@@ -600,7 +625,9 @@ function tick(){ const n=new Date();
   $("ct").textContent=`${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
   $("cd").textContent=`${fmtD(today())}（${wdOf(today())}）`;
 }
-renderPower(); render(); tick(); setInterval(tick,1000);
+tick(); setInterval(tick,1000);
+syncPullAll().finally(()=>{ renderPower(); render(); });
+setInterval(()=>{ syncPullAll().then(ok=>{ if(ok) render(); }); }, 15000); // 15秒ごとに他端末の更新を取り込む
 
 // ── 個人別出勤簿 ──
 function showMain(){
