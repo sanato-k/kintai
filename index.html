@@ -149,13 +149,15 @@
   .rate-card{ background:var(--card); border:1px solid var(--line); border-radius:14px;
         padding:12px; margin-bottom:10px; box-shadow:0 1px 3px rgba(20,30,80,.05); }
   .rate-card .rc-name{ font-weight:800; font-size:16px; margin-bottom:8px; }
+  .rc-name-row{ display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .rc-name-row .rc-name{ margin-bottom:0; }
+  .rc-confirm-btn{ border:none; border-radius:8px; padding:8px 14px; font-size:13px;
+        font-weight:800; color:#fff; background:var(--accent); flex-shrink:0; }
   .rate-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   .rate-field{ display:flex; flex-direction:column; gap:3px; }
   .rate-field label{ font-size:11px; color:#5b639a; font-weight:700; }
   .rate-field input{ border:1px solid var(--line); border-radius:8px; padding:8px; font-size:15px;
         background:var(--card); color:var(--text); width:100%; }
-  .rate-field-confirm{ margin-top:4px; border:none; border-radius:6px; padding:4px 0;
-        font-size:11px; font-weight:800; color:#fff; background:var(--accent); width:100%; }
   .rate-export{ width:100%; border:none; border-radius:12px; padding:14px; font-size:16px;
         font-weight:800; color:#fff; background:var(--send); margin-top:8px; }
   .rate-tabs{ display:flex; gap:6px; margin-bottom:12px; }
@@ -900,18 +902,25 @@ function renderRates(){
       <div class="rate-field">
         <label>${label}</label>
         <input type="number" inputmode="decimal" id="r-${idx}-${k}" value="${r[k]!=null?r[k]:''}">
-        <button class="rate-field-confirm" onclick="applyRateField('${nameEsc}','${k}',${idx})">決定</button>
       </div>`).join("");
     return `<div class="rate-card">
-      <div class="rc-name">${esc(name)}</div>
+      <div class="rc-name-row">
+        <div class="rc-name">${esc(name)}</div>
+        <button class="rc-confirm-btn" onclick="applyRateForEmp('${nameEsc}',${idx})">決定</button>
+      </div>
       <div class="${gridCls}">${fields}</div>
     </div>`;
   }).join("");
 }
-function applyRateField(name,key,idx){
-  const el=document.getElementById(`r-${idx}-${key}`);
-  if(!el) return;
-  setRate(name,key,el.value);
+function applyRateForEmp(name,idx){
+  const cfg=RATE_CATS[rateTab];
+  const all=ratesOf(rateTab);
+  if(!all[name]) all[name]={};
+  cfg.fields.forEach(([k])=>{
+    const el=document.getElementById(`r-${idx}-${k}`);
+    if(el) all[name][k] = el.value===""?null:parseFloat(el.value);
+  });
+  set(RATE_CATS[rateTab].key,all);
   renderRates();
 }
 function applyBulkRates(){
