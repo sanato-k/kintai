@@ -205,11 +205,12 @@
       <button class="pb-back" onclick="showMain()">← 戻る</button>
       <span class="pb-title">単価設定</span>
     </div>
-    <div class="rate-tabs" id="rate-tabs">
-      <button onclick="setRateTab('kyuyo')">給与賃金</button>
-      <button onclick="setRateTab('senju')">専従者給与</button>
-      <button onclick="setRateTab('other')">その他</button>
-    </div>
+    <select class="page-nav-sel" id="rate-tab-sel" onchange="setRateTab(this.value)" style="width:100%;margin-bottom:12px;">
+      <option value="kyuyo">給与賃金</option>
+      <option value="senju">専従者給与</option>
+      <option value="other">その他</option>
+    </select>
+    <div class="rate-card" id="rate-bulk" style="border:2px solid var(--accent);"></div>
     <div id="rates-list"></div>
     <button class="rate-export" onclick="exportRatesCSV()">単価をCSVで送信 ▶</button>
   </div>
@@ -822,11 +823,22 @@ function showRates(){
 }
 function renderRates(){
   const cfg=RATE_CATS[rateTab];
-  document.getElementById('rate-tabs').innerHTML = Object.entries(RATE_CATS).map(([k,c])=>
-    `<button class="${k===rateTab?'on':''}" onclick="setRateTab('${k}')">${c.label}</button>`
-  ).join("");
-  const all=ratesOf(rateTab);
+  document.getElementById('rate-tab-sel').value=rateTab;
   const gridCls = cfg.fields.length===1 ? 'rate-grid g1' : 'rate-grid';
+
+  // 一括入力カード（ここに数字を入れて「変更」を押すと全員に反映）
+  const bulkFields=cfg.fields.map(([k,label])=>`
+    <div class="rate-field">
+      <label>${label}</label>
+      <input type="number" inputmode="decimal" id="bulk-${k}" placeholder="">
+    </div>`).join("");
+  document.getElementById('rate-bulk').innerHTML = `
+    <div class="rc-name">🔁 一括変更（同区分の全員に反映）</div>
+    <div class="${gridCls}">${bulkFields}</div>
+    <button class="rate-export" style="margin-top:8px;" onclick="applyBulkRates()">この内容で変更 ▶</button>
+  `;
+
+  const all=ratesOf(rateTab);
   const targetEmps = emps().filter(name=>empCat(name)===rateTab);
   document.getElementById('rates-list').innerHTML = (targetEmps.length?targetEmps:['(この区分の従業員はいません)']).map(name=>{
     if(name==='(この区分の従業員はいません)') return `<div class="rate-card" style="text-align:center;color:#8a93b8;">${name}</div>`;
@@ -842,6 +854,26 @@ function renderRates(){
       <div class="${gridCls}">${fields}</div>
     </div>`;
   }).join("");
+}
+function applyBulkRates(){
+  const cfg=RATE_CATS[rateTab];
+  const targetEmps = emps().filter(name=>empCat(name)===rateTab);
+  if(!targetEmps.length){ uiAlert("この区分の従業員がいません"); return; }
+  const vals={};
+  cfg.fields.forEach(([k])=>{
+    const el=document.getElementById(`bulk-${k}`);
+    if(el && el.value!=="") vals[k]=parseFloat(el.value);
+  });
+  if(Object.keys(vals).length===0){ uiAlert("数字を入力してください"); return; }
+  uiConfirm(`${cfg.label}の${targetEmps.length}名全員に同じ金額を反映しますか？`, ()=>{
+    const all=ratesOf(rateTab);
+    targetEmps.forEach(name=>{
+      if(!all[name]) all[name]={};
+      Object.entries(vals).forEach(([k,v])=>{ all[name][k]=v; });
+    });
+    set(RATE_CATS[rateTab].key,all);
+    renderRates();
+  });
 }
 function setRate(name,key,value){
   const all=ratesOf(rateTab);
