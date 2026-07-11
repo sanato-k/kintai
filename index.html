@@ -880,10 +880,12 @@ const RATE_CATS={
       ["owari","終わり"],
     ]},
 };
-let rateTab="kyuyo";
+const RATETAB_KEY="kinmu_ratetab_v1";
+let rateTab=load(RATETAB_KEY,"kyuyo");
 const ratesOf=(cat)=>load(RATE_CATS[cat].key,{});
 function setRateTab(cat){
   rateTab=cat;
+  localStorage.setItem(RATETAB_KEY,JSON.stringify(cat));
   renderRates();
 }
 let bulkRatesOpen=false;
