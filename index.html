@@ -245,7 +245,7 @@
   </div>
 
   <div class="sec-head">
-    <select class="page-nav-sel" onchange="pageNavGo(this.value)">
+    <select class="page-nav-sel" id="page-nav-sel" onchange="pageNavGo(this.value)">
       <option value="main" selected>従業員</option>
       <option value="personal">個人出勤簿</option>
       <option value="rates">単価</option>
@@ -675,7 +675,7 @@ function showMain(){
   syncPullAll().then(ok=>{ if(ok) render(); });
 }
 function syncPageNavSel(val){
-  const sel=document.querySelector('.page-nav-sel');
+  const sel=document.getElementById('page-nav-sel');
   if(sel) sel.value=val;
 }
 function pageNavGo(val){
