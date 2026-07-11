@@ -905,6 +905,7 @@ function renderRates(){
 
   const all=ratesOf(rateTab);
   const targetEmps = emps().filter(name=>empCat(name)===rateTab);
+  const isSenju = rateTab==='senju';
   document.getElementById('rates-list').innerHTML = (targetEmps.length?targetEmps:['(この区分の従業員はいません)']).map((name,idx)=>{
     if(name==='(この区分の従業員はいません)') return `<div class="rate-card" style="text-align:center;color:#8a93b8;">${name}</div>`;
     const r=all[name]||{};
@@ -912,12 +913,13 @@ function renderRates(){
     const fields=cfg.fields.map(([k,label])=>`
       <div class="rate-field">
         <label>${label}</label>
-        <input type="number" inputmode="decimal" id="r-${idx}-${k}" value="${r[k]!=null?r[k]:''}">
+        <input type="number" inputmode="decimal" id="r-${idx}-${k}" value="${r[k]!=null?r[k]:''}"
+          ${isSenju?`onkeydown="if(event.key==='Enter'){event.preventDefault();setRate('${nameEsc}','${k}',this.value);this.blur();}"`:''}>
       </div>`).join("");
     return `<div class="rate-card">
       <div class="rc-name-row">
         <div class="rc-name">${esc(name)}</div>
-        <button class="rc-confirm-btn" onclick="applyRateForEmp('${nameEsc}',${idx})">決定</button>
+        ${isSenju?'':`<button class="rc-confirm-btn" onclick="applyRateForEmp('${nameEsc}',${idx})">決定</button>`}
       </div>
       <div class="${gridCls}">${fields}</div>
     </div>`;
