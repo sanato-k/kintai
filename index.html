@@ -135,6 +135,20 @@
   .pb-input .pi-e{ background:var(--early-on); }
   .pb-input .pi-o{ background:var(--over-on); }
   .pb-input .pi-clear{ grid-column:1/3; background:#94a3b8; }
+
+  /* ── 単価設定ページ ── */
+  #page-rates{ display:none; padding:14px 14px 96px; }
+  #page-rates.active{ display:block; }
+  .rate-card{ background:var(--card); border:1px solid var(--line); border-radius:14px;
+        padding:12px; margin-bottom:10px; box-shadow:0 1px 3px rgba(20,30,80,.05); }
+  .rate-card .rc-name{ font-weight:800; font-size:16px; margin-bottom:8px; }
+  .rate-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .rate-field{ display:flex; flex-direction:column; gap:3px; }
+  .rate-field label{ font-size:11px; color:#5b639a; font-weight:700; }
+  .rate-field input{ border:1px solid var(--line); border-radius:8px; padding:8px; font-size:15px;
+        background:var(--card); color:var(--text); width:100%; }
+  .rate-export{ width:100%; border:none; border-radius:12px; padding:14px; font-size:16px;
+        font-weight:800; color:#fff; background:var(--send); margin-top:8px; }
 </style>
 </head>
 <body>
@@ -171,6 +185,16 @@
       </div>
     </div>
     <div class="pb-summary" id="pb-summary"></div>
+  </div>
+
+  <!-- 単価設定ページ -->
+  <div id="page-rates">
+    <div class="pb-head">
+      <button class="pb-back" onclick="showMain()">← 戻る</button>
+      <span class="pb-title">単価設定</span>
+    </div>
+    <div id="rates-list"></div>
+    <button class="rate-export" onclick="exportRatesCSV()">単価をCSVで送信 ▶</button>
   </div>
 
   <div id="page-main">
@@ -214,6 +238,7 @@
   <div class="footbar">
     <button class="navbtn next" onclick="confirmNext()">確定して送信 → 次へ ▶</button>
     <button class="navbtn" style="background:#4f46e5;margin-top:8px;" onclick="showPersonal()">👤 個人別出勤簿</button>
+    <button class="navbtn" style="background:#b45309;margin-top:8px;" onclick="showRates()">💰 単価設定</button>
   </div>
   </div><!-- /page-main -->
 <script>
@@ -505,6 +530,7 @@ renderPower(); render(); tick(); setInterval(tick,1000);
 // ── 個人別出勤簿 ──
 function showMain(){
   document.getElementById('page-personal').classList.remove('active');
+  document.getElementById('page-rates').classList.remove('active');
   document.getElementById('page-main').style.display='';
 }
 function showPersonalFor(i){
@@ -661,6 +687,65 @@ function pbClearDay(){
     clearSent(pbSelDate);
     renderPersonal();
   });
+}
+
+// ── 単価設定 ──
+const RK="kinmu_rates_v1";
+const RATE_FIELDS=[
+  ["heijitsu","日給(平日)"],
+  ["doniti","土日"],
+  ["sotai","早退(控除)"],
+  ["hayade","早出/残業"],
+  ["season","シーズン給"],
+  ["kikin","基金年金"],
+];
+const rates=()=>load(RK,{});
+function showRates(){
+  document.getElementById('page-main').style.display='none';
+  document.getElementById('page-personal').classList.remove('active');
+  document.getElementById('page-rates').classList.add('active');
+  renderRates();
+}
+function renderRates(){
+  const all=rates();
+  document.getElementById('rates-list').innerHTML = emps().map(name=>{
+    const r=all[name]||{};
+    const fields=RATE_FIELDS.map(([k,label])=>`
+      <div class="rate-field">
+        <label>${label}</label>
+        <input type="number" inputmode="decimal" value="${r[k]!=null?r[k]:''}"
+          onchange="setRate('${esc(name).replace(/'/g,"\\'")}','${k}',this.value)">
+      </div>`).join("");
+    return `<div class="rate-card">
+      <div class="rc-name">${esc(name)}</div>
+      <div class="rate-grid">${fields}</div>
+    </div>`;
+  }).join("");
+}
+function setRate(name,key,value){
+  const all=rates();
+  if(!all[name]) all[name]={};
+  all[name][key] = value===""?null:parseFloat(value);
+  set(RK,all);
+}
+function exportRatesCSV(){
+  const all=rates();
+  let csv="氏名,日給(平日),土日,早退(控除),早出/残業,シーズン給,基金年金\n";
+  emps().forEach(name=>{
+    const r=all[name]||{};
+    const row=[name,...RATE_FIELDS.map(([k])=>r[k]!=null?r[k]:"")];
+    csv+=row.map(qcsv).join(",")+"\n";
+  });
+  const bom="﻿";
+  const blob=new Blob([bom+csv],{type:"text/csv;charset=utf-8"});
+  const fname=`tanka_${today().replace(/-/g,"")}.csv`;
+  const file=new File([blob],fname,{type:"text/csv"});
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    navigator.share({files:[file],title:fname}).catch(()=>{});
+  }else{
+    const url=URL.createObjectURL(blob); const a=document.createElement("a");
+    a.href=url; a.download=fname; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
 }
 </script>
 </body>
