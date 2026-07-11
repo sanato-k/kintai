@@ -205,14 +205,17 @@
   <div id="page-rates">
     <div class="pb-head">
       <button class="pb-back" onclick="showMain()">← 戻る</button>
-      <span class="pb-title">単価設定</span>
+      <span class="pb-title">単価</span>
     </div>
-    <select class="page-nav-sel" id="rate-tab-sel" onchange="setRateTab(this.value)" style="width:100%;margin-bottom:12px;">
-      <option value="kyuyo">給与賃金</option>
-      <option value="senju">専従者給与</option>
-      <option value="other">その他</option>
-    </select>
-    <div class="rate-card" id="rate-bulk" style="border:2px solid var(--accent);"></div>
+    <div style="display:flex; gap:8px; margin-bottom:12px;">
+      <select class="page-nav-sel" id="rate-tab-sel" onchange="setRateTab(this.value)" style="flex:1;">
+        <option value="kyuyo">給与賃金</option>
+        <option value="senju">専従者給与</option>
+        <option value="other">その他</option>
+      </select>
+      <button class="mini add" id="bulk-toggle-btn" onclick="toggleBulkRates()">一括変更</button>
+    </div>
+    <div class="rate-card" id="rate-bulk" style="border:2px solid var(--accent); display:none;"></div>
     <div id="rates-list"></div>
     <button class="rate-export" onclick="exportRatesCSV()">単価をCSVで送信 ▶</button>
   </div>
@@ -239,7 +242,7 @@
     <select class="page-nav-sel" onchange="pageNavGo(this.value)">
       <option value="main" selected>従業員</option>
       <option value="personal">個人出勤簿</option>
-      <option value="rates">単価設定</option>
+      <option value="rates">単価</option>
     </select>
     <span>
       <button class="mini add" onclick="addEmp()">＋ 追加</button>
@@ -841,6 +844,13 @@ function setRateTab(cat){
   rateTab=cat;
   renderRates();
 }
+let bulkRatesOpen=false;
+function toggleBulkRates(){
+  bulkRatesOpen=!bulkRatesOpen;
+  const btn=document.getElementById('bulk-toggle-btn');
+  if(btn) btn.textContent = bulkRatesOpen ? '一括変更 ✕' : '一括変更';
+  document.getElementById('rate-bulk').style.display = bulkRatesOpen ? '' : 'none';
+}
 function showRates(){
   document.getElementById('page-main').style.display='none';
   document.getElementById('page-personal').classList.remove('active');
@@ -859,11 +869,15 @@ function renderRates(){
       <label>${label}</label>
       <input type="number" inputmode="decimal" id="bulk-${k}" placeholder="">
     </div>`).join("");
-  document.getElementById('rate-bulk').innerHTML = `
+  const bulkEl=document.getElementById('rate-bulk');
+  bulkEl.innerHTML = `
     <div class="rc-name">🔁 一括変更（同区分の全員に反映）</div>
     <div class="rate-grid bulk-row">${bulkFields}</div>
     <button class="rate-export" style="margin-top:8px;" onclick="applyBulkRates()">この内容で変更 ▶</button>
   `;
+  bulkEl.style.display = bulkRatesOpen ? '' : 'none';
+  const toggleBtn=document.getElementById('bulk-toggle-btn');
+  if(toggleBtn) toggleBtn.textContent = bulkRatesOpen ? '一括変更 ✕' : '一括変更';
 
   const all=ratesOf(rateTab);
   const targetEmps = emps().filter(name=>empCat(name)===rateTab);
