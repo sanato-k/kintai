@@ -388,6 +388,9 @@ const wdOf=s=>WD[new Date(s+"T00:00").getDay()];
 const dayHasPunch=s=>logs().some(x=>x.date===s);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const qcsv=s=>{ s=String(s==null?"":s); return /[",\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
+// カンマ区切り数値入力（金額欄）
+const fmtNum=v=>{ if(v===null||v===undefined||v==="") return ""; const n=parseFloat(String(v).replace(/,/g,"")); return isNaN(n)?"":n.toLocaleString('en-US',{maximumFractionDigits:2}); };
+const parseNum=s=>{ if(s==null) return null; const t=String(s).trim().replace(/,/g,""); if(t==="") return null; const n=parseFloat(t); return isNaN(n)?null:n; };
 
 // ── 画面内モーダル（prompt/confirm/alert 代替。artifactでも動く） ──
 function closeModal(){ $("modal").style.display="none"; $("m-input").style.display="none"; $("m-btns").innerHTML=""; }
@@ -924,7 +927,7 @@ function renderRates(){
   const bulkFields=cfg.fields.map(([k,label])=>`
     <div class="rate-field">
       <label>${label}</label>
-      <input type="number" inputmode="decimal" id="bulk-${k}" placeholder="">
+      <input type="text" inputmode="decimal" id="bulk-${k}" placeholder="" onblur="this.value=fmtNum(this.value)">
     </div>`).join("");
   const bulkEl=document.getElementById('rate-bulk');
   bulkEl.innerHTML = `
@@ -946,7 +949,8 @@ function renderRates(){
     const fields=cfg.fields.map(([k,label])=>`
       <div class="rate-field">
         <label>${label}</label>
-        <input type="number" inputmode="decimal" id="r-${idx}-${k}" value="${r[k]!=null?r[k]:''}"
+        <input type="text" inputmode="decimal" id="r-${idx}-${k}" value="${r[k]!=null?fmtNum(r[k]):''}"
+          onblur="this.value=fmtNum(this.value)"
           ${isSenju?`onkeydown="if(event.key==='Enter'){event.preventDefault();setRate('${nameEsc}','${k}',this.value);this.blur();}"`:''}>
       </div>`).join("");
     return `<div class="rate-card">
@@ -964,7 +968,7 @@ function applyRateForEmp(name,idx){
   if(!all[name]) all[name]={};
   cfg.fields.forEach(([k])=>{
     const el=document.getElementById(`r-${idx}-${k}`);
-    if(el) all[name][k] = el.value===""?null:parseFloat(el.value);
+    if(el) all[name][k] = parseNum(el.value);
   });
   set(RATE_CATS[rateTab].key,all);
   renderRates();
@@ -976,7 +980,7 @@ function applyBulkRates(){
   const vals={};
   cfg.fields.forEach(([k])=>{
     const el=document.getElementById(`bulk-${k}`);
-    if(el && el.value!=="") vals[k]=parseFloat(el.value);
+    if(el && el.value!=="") vals[k]=parseNum(el.value);
   });
   if(Object.keys(vals).length===0){ uiAlert("数字を入力してください"); return; }
   uiConfirm(`${cfg.label}の${targetEmps.length}名全員に同じ金額を反映しますか？`, ()=>{
@@ -992,7 +996,7 @@ function applyBulkRates(){
 function setRate(name,key,value){
   const all=ratesOf(rateTab);
   if(!all[name]) all[name]={};
-  all[name][key] = value===""?null:parseFloat(value);
+  all[name][key] = parseNum(value);
   set(RATE_CATS[rateTab].key,all);
 }
 function exportRatesCSV(){
