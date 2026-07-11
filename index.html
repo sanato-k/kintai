@@ -715,6 +715,8 @@ function pageNavGo(val){
   else if(val==='personal') showPersonal();
   else if(val==='rates') showRates();
 }
+// 個人出勤簿：区分プルダウンの選択を端末に記憶
+const PBCAT_KEY="kinmu_pbcat_v1";
 // 単価区分に応じて氏名プルダウンを絞り込んで構築
 function pbBuildNameOptions(preferName){
   const cat=document.getElementById('pb-cat').value;
@@ -726,6 +728,7 @@ function pbBuildNameOptions(preferName){
 }
 function pbCatChanged(){
   pbSelDate=null;
+  localStorage.setItem(PBCAT_KEY, JSON.stringify(document.getElementById('pb-cat').value));
   pbBuildNameOptions();
   renderPersonal();
 }
@@ -741,6 +744,7 @@ function showPersonalFor(i){
   msel.innerHTML=[...months].sort().reverse().map(m=>`<option value="${m}">${m.replace('-','年')}月</option>`).join('');
   // 区分プルダウンをその従業員の区分に合わせ、氏名を絞り込んで選択
   document.getElementById('pb-cat').value=empCat(name);
+  localStorage.setItem(PBCAT_KEY, JSON.stringify(empCat(name)));
   pbBuildNameOptions(name);
   document.getElementById('page-main').style.display='none';
   document.getElementById('page-personal').classList.add('active');
@@ -751,8 +755,10 @@ function showPersonal(){
   pbSelDate=null;
   const catSel=document.getElementById('pb-cat');
   const curName=document.getElementById('pb-name').value;
-  // 初回はデフォルトで「萩原 千恵」の区分を選択
-  if(!catSel.value){
+  // 記憶している区分があればそれを復元。無ければ「萩原 千恵」の区分をデフォルトに
+  const stored=load(PBCAT_KEY,null);
+  if(stored){ catSel.value=stored; }
+  else{
     const chie=emps().find(n=>n.includes('千恵'));
     catSel.value = chie ? empCat(chie) : 'kyuyo';
   }
