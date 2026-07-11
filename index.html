@@ -154,6 +154,8 @@
   .rate-field label{ font-size:11px; color:#5b639a; font-weight:700; }
   .rate-field input{ border:1px solid var(--line); border-radius:8px; padding:8px; font-size:15px;
         background:var(--card); color:var(--text); width:100%; }
+  .rate-field-confirm{ margin-top:4px; border:none; border-radius:6px; padding:4px 0;
+        font-size:11px; font-weight:800; color:#fff; background:var(--accent); width:100%; }
   .rate-export{ width:100%; border:none; border-radius:12px; padding:14px; font-size:16px;
         font-weight:800; color:#fff; background:var(--send); margin-top:8px; }
   .rate-tabs{ display:flex; gap:6px; margin-bottom:12px; }
@@ -890,20 +892,27 @@ function renderRates(){
 
   const all=ratesOf(rateTab);
   const targetEmps = emps().filter(name=>empCat(name)===rateTab);
-  document.getElementById('rates-list').innerHTML = (targetEmps.length?targetEmps:['(この区分の従業員はいません)']).map(name=>{
+  document.getElementById('rates-list').innerHTML = (targetEmps.length?targetEmps:['(この区分の従業員はいません)']).map((name,idx)=>{
     if(name==='(この区分の従業員はいません)') return `<div class="rate-card" style="text-align:center;color:#8a93b8;">${name}</div>`;
     const r=all[name]||{};
+    const nameEsc=esc(name).replace(/'/g,"\\'");
     const fields=cfg.fields.map(([k,label])=>`
       <div class="rate-field">
         <label>${label}</label>
-        <input type="number" inputmode="decimal" value="${r[k]!=null?r[k]:''}"
-          onchange="setRate('${esc(name).replace(/'/g,"\\'")}','${k}',this.value)">
+        <input type="number" inputmode="decimal" id="r-${idx}-${k}" value="${r[k]!=null?r[k]:''}">
+        <button class="rate-field-confirm" onclick="applyRateField('${nameEsc}','${k}',${idx})">決定</button>
       </div>`).join("");
     return `<div class="rate-card">
       <div class="rc-name">${esc(name)}</div>
       <div class="${gridCls}">${fields}</div>
     </div>`;
   }).join("");
+}
+function applyRateField(name,key,idx){
+  const el=document.getElementById(`r-${idx}-${key}`);
+  if(!el) return;
+  setRate(name,key,el.value);
+  renderRates();
 }
 function applyBulkRates(){
   const cfg=RATE_CATS[rateTab];
