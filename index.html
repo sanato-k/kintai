@@ -285,6 +285,7 @@
       <div style="display:flex; gap:8px;">
         <button class="navbtn now" style="flex:0 0 64px;" onclick="goToday(event)">今日</button>
         <div class="datebar" style="flex:1; margin-bottom:0;" onclick="openPicker()">📅 <input type="date" id="wd" onchange="manualDate()"></div>
+        <button class="mini" id="senjuToggleBtn" onclick="toggleSenjuVisible()">専従者</button>
         <button class="mini add" onclick="addEmp()">＋ 追加</button>
         <button class="mini rm" id="rmbtn" onclick="rmEmp()">✏ 削除</button>
       </div>
@@ -325,6 +326,22 @@ const empCat=(name)=>{
   if(saved) return saved;
   return SENJU_DEFAULT.includes(name) ? "senju" : "kyuyo";
 };
+
+// ── 専従者の表示/非表示トグル ──
+const SENJU_VISIBLE_KEY="kinmu_senju_visible_v1";
+let senjuVisible=load(SENJU_VISIBLE_KEY,true);
+function toggleSenjuVisible(){
+  senjuVisible=!senjuVisible;
+  localStorage.setItem(SENJU_VISIBLE_KEY,JSON.stringify(senjuVisible));
+  render();
+}
+function updateSenjuToggleBtn(){
+  const btn=document.getElementById('senjuToggleBtn');
+  if(!btn) return;
+  btn.style.setProperty('background', senjuVisible?'#dcfce7':'#ffffff', 'important');
+  btn.style.setProperty('color', senjuVisible?'#14532d':'#334155', 'important');
+  btn.style.border = senjuVisible ? 'none' : '1px solid var(--line)';
+}
 let removeMode=false;
 
 // ── 日本の祝日判定（簡易版。振替休日対応） ──
@@ -652,7 +669,9 @@ function render(){
   }
   // 従業員
   $("rmbtn").textContent = removeMode ? "✓ 完了" : "✏ 削除";
+  updateSenjuToggleBtn();
   $("emps").innerHTML=emps().map((name,i)=>{
+    if(!senjuVisible && empCat(name)==='senju') return '';
     const io=(empCat(name)==='senju') ? '出勤' : lastInOut(name);
     const eh=hoursOf(name,"早出"), oh=hoursOf(name,"残業");
     const ncls=removeMode?'name del':('name '+(io?'act':''));
