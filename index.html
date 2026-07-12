@@ -201,6 +201,9 @@
 
   <!-- 個人別出勤簿ページ -->
   <div id="page-personal">
+   <div style="display:flex; gap:8px; align-items:stretch;">
+    <div id="future-btn-space-personal" style="flex:0 0 160px; display:flex; flex-direction:column; gap:6px;"></div>
+    <div style="flex:1; min-width:0;">
     <div class="pb-head">
       <button class="pb-back" onclick="showMain()">← 戻る</button>
       <span class="pb-title">個人別出勤簿</span>
@@ -214,8 +217,6 @@
       <select id="pb-name" onchange="pbSelDate=null;renderPersonal()"></select>
       <select id="pb-month" onchange="pbSelDate=null;renderPersonal()"></select>
     </div>
-
-    <div id="future-btn-space-personal" style="min-height:50px; margin-bottom:12px;"></div>
 
     <table class="pb-table">
       <colgroup>
@@ -235,10 +236,15 @@
       </div>
     </div>
     <div class="pb-summary" id="pb-summary"></div>
+    </div>
+   </div>
   </div>
 
   <!-- 単価設定ページ -->
   <div id="page-rates">
+   <div style="display:flex; gap:8px; align-items:stretch;">
+    <div id="future-btn-space-rates" style="flex:0 0 160px; display:flex; flex-direction:column; gap:6px;"></div>
+    <div style="flex:1; min-width:0;">
     <div class="pb-head">
       <button class="pb-back" onclick="showMain()">← 戻る</button>
       <span class="pb-title">給与賃金</span>
@@ -252,11 +258,11 @@
       <button class="mini add" id="bulk-toggle-btn" onclick="toggleBulkRates()">一括変更</button>
     </div>
 
-    <div id="future-btn-space-rates" style="min-height:50px; margin-bottom:12px;"></div>
-
     <div class="rate-card" id="rate-bulk" style="border:2px solid var(--accent); display:none;"></div>
     <div id="rates-list"></div>
     <button class="rate-export" onclick="exportRatesCSV()">単価をCSVで送信 ▶</button>
+    </div>
+   </div>
   </div>
 
   <div id="page-main">
@@ -769,7 +775,7 @@ document.addEventListener('click',(ev)=>{
   });
 });
 
-// ── A〜J メニューバー（並び替え可能・複数ページに表示） ──
+// ── A〜J メニューバー（並び替え可能・全ページ共通の左サイドバー形式） ──
 const LB_ORDER_KEY="kinmu_lbtn_order_v1";
 const LB_IDS=["A","B","C","D","E","F","G","H","I","J"];
 const lbOrder=()=>load(LB_ORDER_KEY,LB_IDS);
