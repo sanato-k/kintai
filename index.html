@@ -282,11 +282,11 @@
         </div>
       </div>
 
-      <div class="datebar" onclick="openPicker()">📅 <input type="date" id="wd" onchange="manualDate()"></div>
-      <div class="dnote" id="dnote"></div>
-      <div class="nav">
-        <button class="navbtn now" onclick="goToday(event)">今日</button>
+      <div style="display:flex; gap:8px;">
+        <button class="navbtn now" style="flex:0 0 64px;" onclick="goToday(event)">今日</button>
+        <div class="datebar" style="flex:1; margin-bottom:0;" onclick="openPicker()">📅 <input type="date" id="wd" onchange="manualDate()"></div>
       </div>
+      <div class="dnote" id="dnote"></div>
 
       <div id="future-btn-space" style="min-height:50px; margin-bottom:12px;"></div>
 
