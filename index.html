@@ -285,18 +285,13 @@
       <div style="display:flex; gap:8px;">
         <button class="navbtn now" style="flex:0 0 64px;" onclick="goToday(event)">今日</button>
         <div class="datebar" style="flex:1; margin-bottom:0;" onclick="openPicker()">📅 <input type="date" id="wd" onchange="manualDate()"></div>
+        <button class="mini add" onclick="addEmp()">＋ 追加</button>
+        <button class="mini rm" id="rmbtn" onclick="rmEmp()">✏ 削除</button>
       </div>
       <div class="dnote" id="dnote"></div>
 
       <div id="future-btn-space" style="min-height:50px; margin-bottom:12px;"></div>
 
-      <div class="sec-head">
-        <span></span>
-        <span>
-          <button class="mini add" onclick="addEmp()">＋ 追加</button>
-          <button class="mini rm" id="rmbtn" onclick="rmEmp()">✏ 削除</button>
-        </span>
-      </div>
       <div id="emps"></div>
     </div>
   </div>
