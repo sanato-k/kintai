@@ -120,7 +120,7 @@
   .pb-controls #pb-cat{ flex:0 0 100px; min-width:0; }
   .pb-controls #pb-name{ flex:0 0 100px; min-width:0; }
   .pb-controls #pb-month{ flex:0 0 calc(9ch + 40px); min-width:0; text-align:left; }
-  .pb-table{ width:50%; border-collapse:collapse; font-size:14px; table-layout:fixed; }
+  .pb-table{ width:100%; border-collapse:collapse; font-size:14px; table-layout:fixed; }
   .pb-table th{ background:var(--accent); color:#fff; padding:8px 4px; text-align:center; border-right:1px solid rgba(255,255,255,.35); }
   .pb-table th:last-child{ border-right:none; }
   .pb-table td{ padding:7px 4px; text-align:center; border-bottom:1px solid var(--line); border-right:1px solid var(--line); }
@@ -139,7 +139,7 @@
   .pb-table .tag-e{ color:var(--early-on); }
   .pb-table .tag-o{ color:var(--over-on); }
   .pb-table .tag-amt{ font-weight:800; }
-  .pb-summary{ margin-top:16px; background:var(--card); border-radius:12px; padding:14px; width:25%; }
+  .pb-summary{ margin-top:16px; background:var(--card); border-radius:12px; padding:14px; width:100%; box-sizing:border-box; }
   .pb-summary h3{ margin:0 0 10px; font-size:16px; }
   .pb-sum-row{ display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--line); font-size:15px; }
   .pb-sum-row:last-child{ border-bottom:none; font-weight:800; }
@@ -192,6 +192,7 @@
   /* 全ボタンを薄い緑に統一 */
   button{ background:#dcfce7 !important; color:#14532d !important; }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
   <div class="modal-bg" id="modal">
@@ -222,24 +223,54 @@
     </div>
 
     <div id="pb-senju-sheet" style="display:none;"></div>
-    <table class="pb-table" id="pb-daily-table">
-      <colgroup>
-        <col class="pb-col-date"><col class="pb-col-wd"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-amt">
-      </colgroup>
-      <thead><tr><th>日付</th><th>曜</th><th>出勤</th><th>早退</th><th>早出</th><th>残業</th><th>金額</th></tr></thead>
-      <tbody id="pb-body"></tbody>
-    </table>
-    <div class="pb-input" id="pb-input">
-      <div class="pi-date" id="pi-date"></div>
-      <div class="pi-btns">
-        <button class="pi-in" id="pi-btn-in" onclick="pbToggle('出勤')">出勤</button>
-        <button class="pi-out" id="pi-btn-out" onclick="pbToggle('早退')">早退</button>
-        <button class="pi-e" id="pi-btn-e" onclick="pbHours('早出')">早出</button>
-        <button class="pi-o" id="pi-btn-o" onclick="pbHours('残業')">残業</button>
-        <button class="pi-clear" onclick="pbClearDay()">この日を全部消す</button>
+    <div style="display:flex; gap:12px; align-items:flex-start;">
+     <div style="flex:0 0 75%; min-width:0;">
+      <table class="pb-table" id="pb-daily-table">
+        <colgroup>
+          <col class="pb-col-date"><col class="pb-col-wd"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-amt">
+        </colgroup>
+        <thead><tr><th>日付</th><th>曜</th><th>出勤</th><th>早退</th><th>早出</th><th>残業</th><th>金額</th></tr></thead>
+        <tbody id="pb-body"></tbody>
+      </table>
+      <div class="pb-input" id="pb-input">
+        <div class="pi-date" id="pi-date"></div>
+        <div class="pi-btns">
+          <button class="pi-in" id="pi-btn-in" onclick="pbToggle('出勤')">出勤</button>
+          <button class="pi-out" id="pi-btn-out" onclick="pbToggle('早退')">早退</button>
+          <button class="pi-e" id="pi-btn-e" onclick="pbHours('早出')">早出</button>
+          <button class="pi-o" id="pi-btn-o" onclick="pbHours('残業')">残業</button>
+          <button class="pi-clear" onclick="pbClearDay()">この日を全部消す</button>
+        </div>
       </div>
+      <div class="pb-summary" id="pb-summary"></div>
+     </div>
+     <div id="pb-line-panel" style="flex:1; min-width:0; background:var(--card); border-radius:12px; padding:14px;">
+       <h3 style="margin:0 0 10px; font-size:16px;">LINE送信プレビュー</h3>
+       <div id="pb-line-content">
+         <table id="pb-line-table" style="width:100%; border-collapse:collapse; font-size:13px;">
+           <thead><tr><th style="text-align:left;">日付</th><th>出勤</th><th style="text-align:right;">給与</th><th style="text-align:right;">時間外</th></tr></thead>
+           <tbody id="pb-line-body"></tbody>
+         </table>
+       </div>
+       <div style="margin-top:10px;">
+         <label style="font-size:12px; color:var(--muted);">送信前メモ</label>
+         <textarea id="pb-line-memo-before" rows="2" style="width:100%; box-sizing:border-box;" placeholder="例：今月もありがとうございます"></textarea>
+       </div>
+       <div style="margin-top:8px;">
+         <label style="font-size:12px; color:var(--muted);">送信後メモ</label>
+         <textarea id="pb-line-memo-after" rows="2" style="width:100%; box-sizing:border-box;" placeholder="送信後の記録用メモ" onchange="pbLineMemoAfterSave()"></textarea>
+       </div>
+       <div style="display:flex; gap:8px; margin-top:10px;">
+         <button style="flex:1;" onclick="sendLineNow(this)">今すぐ送信</button>
+         <button style="flex:1;" onclick="toggleLineSchedule(this)">予約送信</button>
+       </div>
+       <div id="pb-line-schedule-box" style="display:none; margin-top:8px;">
+         <input type="datetime-local" id="pb-line-schedule-at" style="width:100%; box-sizing:border-box;">
+         <button style="width:100%; margin-top:6px;" onclick="scheduleLineSend(this)">この日時で予約する</button>
+       </div>
+       <div id="pb-line-status" style="font-size:12px; color:var(--muted); margin-top:8px;"></div>
+     </div>
     </div>
-    <div class="pb-summary" id="pb-summary"></div>
     </div>
    </div>
   </div>
@@ -985,6 +1016,7 @@ function renderPersonal(){
     document.getElementById('pb-input').classList.remove('active');
     document.getElementById('pb-summary').style.display='none';
     document.getElementById('pb-senju-sheet').style.display='block';
+    document.getElementById('pb-line-panel').style.display='none';
     renderPbSenjuSheet(name);
     return;
   }else{
@@ -1001,6 +1033,7 @@ function renderPersonal(){
   const kRate=isKyuyo?(ratesOf('kyuyo')[name]||{}):null;
 
   let rows='', shukin=0, soutai=0, hayade=0, zangyou=0;
+  const linePreviewRows=[];
   for(let d=1;d<=days;d++){
     const date=`${ym}-${String(d).padStart(2,'0')}`;
     const wd=new Date(date+'T00:00').getDay();
@@ -1016,16 +1049,16 @@ function renderPersonal(){
     if(hasOut) soutai++;
     if(eRec) hayade+=parseFloat(eRec.hours)||0;
     if(oRec) zangyou+=parseFloat(oRec.hours)||0;
-    let amtTxt='';
+    let amtTxt='', baseAmt=0, otAmt=0;
     if(isKyuyo && (hasIn||hasOut||eRec||oRec)){
       const isWknd = isHol || wd===6 || wd===0;
-      let amt=0;
-      if(hasIn) amt += Number((isWknd?kRate.doniti:kRate.heijitsu))||0;
-      if(hasOut) amt -= Number(kRate.sotai)||0;
-      if(eRec) amt += (parseFloat(eRec.hours)||0) * (Number(kRate.hayade)||0);
-      if(oRec) amt += (parseFloat(oRec.hours)||0) * (Number(kRate.hayade)||0);
-      amtTxt = fmtNum(amt);
+      if(hasIn) baseAmt += Number((isWknd?kRate.doniti:kRate.heijitsu))||0;
+      if(hasOut) baseAmt -= Number(kRate.sotai)||0;
+      if(eRec) otAmt += (parseFloat(eRec.hours)||0) * (Number(kRate.hayade)||0);
+      if(oRec) otAmt += (parseFloat(oRec.hours)||0) * (Number(kRate.hayade)||0);
+      amtTxt = fmtNum(baseAmt+otAmt);
     }
+    if(isKyuyo) linePreviewRows.push({label:`${m}/${d}(${wdStr})`, mark:hasIn?'○':'', base:baseAmt, ot:otAmt});
     rows+=`<tr class="${dayCls} ${date===pbSelDate?'sel':''}" onclick="pbSelectDay('${date}')">
       <td>${m}/${d}</td>
       <td>${wdStr}</td>
@@ -1045,9 +1078,90 @@ function renderPersonal(){
     <div class="pb-sum-row"><span>早出</span><span>${hayade}h</span></div>
     <div class="pb-sum-row"><span>残業</span><span>${zangyou}h</span></div>
   `;
+  renderLinePanel(name, m, isKyuyo, linePreviewRows);
 }
 
-// ── 個人別ページ内での直接入力 ──
+// ── LINE送信プレビュー ──
+const LINE_MEMO_AFTER_KEY='kinmu_line_memo_after_v1';
+function pbLineMemoKey(name,ym){ return `${name}_${ym}`; }
+function renderLinePanel(name, m, isKyuyo, rows){
+  const ym=document.getElementById('pb-month').value;
+  const box=document.getElementById('pb-line-panel');
+  if(!isKyuyo){
+    box.style.display='none';
+    return;
+  }
+  box.style.display='';
+  const attended=rows.filter(r=>r.mark==='○');
+  let baseSum=0, otSum=0;
+  let body=attended.map(r=>`<tr>
+    <td>${r.label}</td>
+    <td style="text-align:center;">○</td>
+    <td style="text-align:right;">${fmtNum(r.base)}</td>
+    <td style="text-align:right;">${r.ot?fmtNum(r.ot):''}</td>
+  </tr>`).join('');
+  attended.forEach(r=>{ baseSum+=r.base; otSum+=r.ot; });
+  body+=`<tr style="font-weight:800; border-top:2px solid var(--accent);">
+    <td>合計(${attended.length}日)</td><td></td>
+    <td style="text-align:right;">${fmtNum(baseSum)}</td>
+    <td style="text-align:right;">${otSum?fmtNum(otSum):''}</td>
+  </tr>`;
+  document.getElementById('pb-line-body').innerHTML=body;
+
+  const afterAll=load(LINE_MEMO_AFTER_KEY,{});
+  document.getElementById('pb-line-memo-after').value = afterAll[pbLineMemoKey(name,ym)] || '';
+  document.getElementById('pb-line-status').textContent='';
+}
+function pbLineMemoAfterSave(){
+  const name=document.getElementById('pb-name').value;
+  const ym=document.getElementById('pb-month').value;
+  const afterAll=load(LINE_MEMO_AFTER_KEY,{});
+  afterAll[pbLineMemoKey(name,ym)]=document.getElementById('pb-line-memo-after').value;
+  set(LINE_MEMO_AFTER_KEY, afterAll);
+}
+async function captureLinePreview(){
+  const canvas=await html2canvas(document.getElementById('pb-line-content'), {backgroundColor:'#ffffff'});
+  return canvas.toDataURL('image/png').split(',')[1];
+}
+function toggleLineSchedule(el){
+  クリック作動(el);
+  const box=document.getElementById('pb-line-schedule-box');
+  box.style.display = box.style.display==='none' ? 'block' : 'none';
+}
+async function sendLineNow(el){
+  クリック作動(el);
+  const status=document.getElementById('pb-line-status');
+  status.textContent='送信中…';
+  try{
+    const image=await captureLinePreview();
+    const memoBefore=document.getElementById('pb-line-memo-before').value;
+    const res=await fetch(`${SYNC_URL}/line-send`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-Upload-Key':SYNC_KEY},
+      body:JSON.stringify({image, memoBefore})
+    });
+    status.textContent = res.ok ? '送信しました' : '送信エラー';
+  }catch(e){ status.textContent='送信エラー: '+e; }
+}
+async function scheduleLineSend(el){
+  クリック作動(el);
+  const at=document.getElementById('pb-line-schedule-at').value;
+  const status=document.getElementById('pb-line-status');
+  if(!at){ status.textContent='送信日時を入力してください'; return; }
+  status.textContent='予約中…';
+  try{
+    const image=await captureLinePreview();
+    const memoBefore=document.getElementById('pb-line-memo-before').value;
+    const res=await fetch(`${SYNC_URL}/line-schedule`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-Upload-Key':SYNC_KEY},
+      body:JSON.stringify({image, memoBefore, sendAt:new Date(at).toISOString()})
+    });
+    status.textContent = res.ok ? '予約しました' : '予約エラー';
+  }catch(e){ status.textContent='予約エラー: '+e; }
+}
+
+// ── 個人別出勤簿ページ内での直接入力 ──
 let pbSelDate=null;
 function pbSelectDay(date){
   pbSelDate = (pbSelDate===date) ? null : date;
