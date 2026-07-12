@@ -224,12 +224,12 @@
 
     <div id="pb-senju-sheet" style="display:none;"></div>
     <div style="display:flex; gap:12px; align-items:flex-start;">
-     <div style="flex:0 0 75%; min-width:0;">
+     <div style="flex:0 0 60%; min-width:0;">
       <table class="pb-table" id="pb-daily-table">
         <colgroup>
-          <col class="pb-col-date"><col class="pb-col-wd"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-amt">
+          <col class="pb-col-date"><col class="pb-col-wd"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-amt"><col class="pb-col-amt"><col class="pb-col-amt">
         </colgroup>
-        <thead><tr><th>日付</th><th>曜</th><th>出勤</th><th>早退</th><th>早出</th><th>残業</th><th>金額</th></tr></thead>
+        <thead><tr><th>日付</th><th>曜</th><th>出勤</th><th>早退</th><th>早出</th><th>残業</th><th>出勤金額</th><th>時間外</th><th>合計</th></tr></thead>
         <tbody id="pb-body"></tbody>
       </table>
       <div class="pb-input" id="pb-input">
@@ -244,31 +244,31 @@
       </div>
       <div class="pb-summary" id="pb-summary"></div>
      </div>
-     <div id="pb-line-panel" style="flex:1; min-width:0; background:var(--card); border-radius:12px; padding:14px;">
-       <h3 style="margin:0 0 10px; font-size:16px;">LINE送信プレビュー</h3>
+     <div id="pb-line-panel" style="flex:1; min-width:0; background:var(--card); border-radius:12px; padding:20px;">
+       <h3 style="margin:0 0 14px; font-size:20px;">LINE送信プレビュー</h3>
        <div id="pb-line-content">
-         <table id="pb-line-table" style="width:100%; border-collapse:collapse; font-size:13px;">
-           <thead><tr><th style="text-align:left;">日付</th><th>出勤</th><th style="text-align:right;">給与</th><th style="text-align:right;">時間外</th></tr></thead>
+         <table id="pb-line-table" style="width:100%; border-collapse:collapse; font-size:16px;">
+           <thead><tr><th style="text-align:left; padding:6px 4px;">日付</th><th style="padding:6px 4px;">出勤</th><th style="text-align:right; padding:6px 4px;">給与</th><th style="text-align:right; padding:6px 4px;">時間外</th></tr></thead>
            <tbody id="pb-line-body"></tbody>
          </table>
        </div>
-       <div style="margin-top:10px;">
-         <label style="font-size:12px; color:var(--muted);">送信前メモ</label>
-         <textarea id="pb-line-memo-before" rows="2" style="width:100%; box-sizing:border-box;" placeholder="例：今月もありがとうございます"></textarea>
+       <div style="margin-top:16px;">
+         <label style="font-size:14px; color:var(--muted);">送信前メモ</label>
+         <textarea id="pb-line-memo-before" rows="3" style="width:100%; box-sizing:border-box; font-size:15px;" placeholder="例：今月もありがとうございます"></textarea>
        </div>
-       <div style="margin-top:8px;">
-         <label style="font-size:12px; color:var(--muted);">送信後メモ</label>
-         <textarea id="pb-line-memo-after" rows="2" style="width:100%; box-sizing:border-box;" placeholder="送信後の記録用メモ" onchange="pbLineMemoAfterSave()"></textarea>
+       <div style="margin-top:12px;">
+         <label style="font-size:14px; color:var(--muted);">送信後メモ</label>
+         <textarea id="pb-line-memo-after" rows="3" style="width:100%; box-sizing:border-box; font-size:15px;" placeholder="送信後の記録用メモ" onchange="pbLineMemoAfterSave()"></textarea>
        </div>
-       <div style="display:flex; gap:8px; margin-top:10px;">
-         <button style="flex:1;" onclick="sendLineNow(this)">今すぐ送信</button>
-         <button style="flex:1;" onclick="toggleLineSchedule(this)">予約送信</button>
+       <div style="display:flex; gap:10px; margin-top:14px;">
+         <button style="flex:1; font-size:16px; padding:10px;" onclick="sendLineNow(this)">今すぐ送信</button>
+         <button style="flex:1; font-size:16px; padding:10px;" onclick="toggleLineSchedule(this)">予約送信</button>
        </div>
-       <div id="pb-line-schedule-box" style="display:none; margin-top:8px;">
-         <input type="datetime-local" id="pb-line-schedule-at" style="width:100%; box-sizing:border-box;">
-         <button style="width:100%; margin-top:6px;" onclick="scheduleLineSend(this)">この日時で予約する</button>
+       <div id="pb-line-schedule-box" style="display:none; margin-top:10px;">
+         <input type="datetime-local" id="pb-line-schedule-at" style="width:100%; box-sizing:border-box; font-size:15px;">
+         <button style="width:100%; margin-top:8px; font-size:16px; padding:10px;" onclick="scheduleLineSend(this)">この日時で予約する</button>
        </div>
-       <div id="pb-line-status" style="font-size:12px; color:var(--muted); margin-top:8px;"></div>
+       <div id="pb-line-status" style="font-size:14px; color:var(--muted); margin-top:10px;"></div>
      </div>
     </div>
     </div>
@@ -1049,14 +1049,16 @@ function renderPersonal(){
     if(hasOut) soutai++;
     if(eRec) hayade+=parseFloat(eRec.hours)||0;
     if(oRec) zangyou+=parseFloat(oRec.hours)||0;
-    let amtTxt='', baseAmt=0, otAmt=0;
+    let baseTxt='', otTxt='', totalTxt='', baseAmt=0, otAmt=0;
     if(isKyuyo && (hasIn||hasOut||eRec||oRec)){
       const isWknd = isHol || wd===6 || wd===0;
       if(hasIn) baseAmt += Number((isWknd?kRate.doniti:kRate.heijitsu))||0;
       if(hasOut) baseAmt -= Number(kRate.sotai)||0;
       if(eRec) otAmt += (parseFloat(eRec.hours)||0) * (Number(kRate.hayade)||0);
       if(oRec) otAmt += (parseFloat(oRec.hours)||0) * (Number(kRate.hayade)||0);
-      amtTxt = fmtNum(baseAmt+otAmt);
+      baseTxt = fmtNum(baseAmt);
+      otTxt = otAmt ? fmtNum(otAmt) : '';
+      totalTxt = fmtNum(baseAmt+otAmt);
     }
     if(isKyuyo) linePreviewRows.push({label:`${m}/${d}(${wdStr})`, mark:hasIn?'○':'', base:baseAmt, ot:otAmt});
     rows+=`<tr class="${dayCls} ${date===pbSelDate?'sel':''}" onclick="pbSelectDay('${date}')">
@@ -1066,7 +1068,9 @@ function renderPersonal(){
       <td class="tag-out">${hasOut?'早退':''}</td>
       <td class="tag-e">${eRec?(eRec.hours+'h'):''}</td>
       <td class="tag-o">${oRec?(oRec.hours+'h'):''}</td>
-      <td class="tag-amt">${amtTxt}</td>
+      <td class="tag-amt">${baseTxt}</td>
+      <td class="tag-amt">${otTxt}</td>
+      <td class="tag-amt">${totalTxt}</td>
     </tr>`;
   }
   document.getElementById('pb-body').innerHTML=rows;
@@ -1094,10 +1098,10 @@ function renderLinePanel(name, m, isKyuyo, rows){
   box.style.display='';
   const attended=rows.filter(r=>r.mark==='○');
   let baseSum=0, otSum=0;
-  let body=attended.map(r=>`<tr>
+  let body=rows.map(r=>`<tr>
     <td>${r.label}</td>
-    <td style="text-align:center;">○</td>
-    <td style="text-align:right;">${fmtNum(r.base)}</td>
+    <td style="text-align:center;">${r.mark}</td>
+    <td style="text-align:right;">${r.mark?fmtNum(r.base):''}</td>
     <td style="text-align:right;">${r.ot?fmtNum(r.ot):''}</td>
   </tr>`).join('');
   attended.forEach(r=>{ baseSum+=r.base; otSum+=r.ot; });
