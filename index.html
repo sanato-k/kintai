@@ -328,6 +328,8 @@
     </div>
     <div class="pb-controls">
       <select id="rs-month" onchange="renderRoster()"></select>
+      <button style="background:transparent !important; border:1px solid #86efac !important;" onclick="forcePushAll(event)">iPadへ送信</button>
+      <button style="background:transparent !important; border:1px solid #86efac !important;" onclick="forcePullAll(event)">iPadデータを取得</button>
     </div>
     <div style="overflow-x:auto;">
     <table class="roster-table" id="roster-table">
@@ -454,7 +456,7 @@ const set=(k,v)=>{ localStorage.setItem(k,JSON.stringify(v)); syncPush(k,v); };
 const SYNC_URL="https://kintai-sync.manasarowaru.workers.dev";
 const SYNC_KEY="kintai2026sync";
 const SYNC_KEYS=["kinmu_emps_v1","kinmu_logs_v1","kinmu_memo_v1","kinmu_power_v1","kinmu_sent_v1",
-  "kinmu_rates_v1","kinmu_rates_senju_v1","kinmu_rates_other_v1","kinmu_empcat_v1"];
+  "kinmu_rates_v1","kinmu_rates_senju_v1","kinmu_rates_other_v1","kinmu_empcat_v1","kinmu_roster_order_v1"];
 function syncPush(k,v){
   if(!SYNC_KEYS.includes(k)) return;
   fetch(`${SYNC_URL}/set?k=${k}`,{
