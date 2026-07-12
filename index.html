@@ -104,6 +104,8 @@
   .m-btns .m-ok{ background:var(--accent); color:#fff; } .m-btns .m-cancel{ background:#e2e8f0; color:#334155; }
   .name.del{ background:#fee2e2; color:#b91c1c; }
   .btn-detail{ border:none; border-radius:8px; background:#e0e7ff; color:#3730a3; font-size:13px; font-weight:800; padding:6px 8px; cursor:pointer; flex-shrink:0; }
+  .drag-handle{ border-radius:8px; background:#ffffff; border:1px solid var(--line); flex-shrink:0;
+        touch-action:none; user-select:none; -webkit-user-select:none; align-self:stretch; }
   .cat-sel{ flex:0 0 44px; border:1px solid var(--line); border-radius:8px; background:var(--card);
         color:var(--text); font-size:13px; font-weight:800; text-align:center; padding:2px; }
 
@@ -656,6 +658,7 @@ function render(){
     const eh=hoursOf(name,"早出"), oh=hoursOf(name,"残業");
     const ncls=removeMode?'name del':('name '+(io?'act':''));
     return `<div class="emp" data-emp="${i}">
+      <div class="drag-handle" style="width:34px;" onpointerdown="nameDown(event,${i})"></div>
       <button class="btn-detail" onclick="showPersonalFor(${i})">📋</button>
       <div class="${ncls}" data-i="${i}" onpointerdown="nameDown(event,${i})">${removeMode?'✕ ':''}${esc(name)}</div>
       <button class="btn b-in ${io==='出勤'?'on':''}" onclick="punchEmp(${i},'出勤')">出勤</button>
