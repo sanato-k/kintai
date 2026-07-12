@@ -779,6 +779,7 @@ function renderLeftBtns(cid){
   const el=document.getElementById(cid);
   if(!el) return;
   el.style.display="flex"; el.style.flexDirection="column"; el.style.gap="6px";
+  el.style.width="160px"; el.style.maxWidth="160px"; el.style.flex="0 0 160px";
   el.innerHTML = lbOrder().map(id=>lbBtnHTML(id,cid)).join("");
 }
 function renderAllLeftBtns(){ LB_CONTAINERS.forEach(renderLeftBtns); }
