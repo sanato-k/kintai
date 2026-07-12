@@ -781,7 +781,7 @@ function openFMenu(cid){
 // PCでマウスがメニューバー(給与賃金ボタン)から離れたら1秒待ってから閉じる。
 // その1秒の間に戻ってくれば(openFMenu再実行)キャンセルされる。
 // サブメニューを閉じるまでの遅延(ms)。今後サブメニューを新しく作る時もこのcloseFMenuパターンを再利用する。
-const FMENU_CLOSE_DELAY=5000;
+const FMENU_CLOSE_DELAY=500;
 function closeFMenu(cid){
   if(fMenuCloseTimers[cid]) clearTimeout(fMenuCloseTimers[cid]);
   fMenuCloseTimers[cid]=setTimeout(()=>{
