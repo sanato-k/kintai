@@ -399,6 +399,7 @@ async function syncPullAll(){
     if(!res.ok) return false;
     const data=await res.json();
     SYNC_KEYS.forEach(k=>{
+      // ここだけはset()を使わずlocalStorageへ直接書く(サーバーから取得した値を再度サーバーへpushしないため)
       if(data[k]!=null) localStorage.setItem(k,JSON.stringify(data[k]));
     });
     return true;
@@ -409,7 +410,7 @@ async function syncPullAll(){
 let senjuVisible=load(SENJU_VISIBLE_KEY,true);
 function toggleSenjuVisible(){
   senjuVisible=!senjuVisible;
-  localStorage.setItem(SENJU_VISIBLE_KEY,JSON.stringify(senjuVisible));
+  set(SENJU_VISIBLE_KEY,senjuVisible);
   render();
 }
 function updateSenjuToggleBtn(){
@@ -895,7 +896,7 @@ function pbBuildNameOptions(preferName){
 }
 function pbCatChanged(){
   pbSelDate=null;
-  localStorage.setItem(PBCAT_KEY, JSON.stringify(document.getElementById('pb-cat').value));
+  set(PBCAT_KEY, document.getElementById('pb-cat').value);
   pbBuildNameOptions();
   renderPersonal();
 }
@@ -911,7 +912,7 @@ function showPersonalFor(i){
   msel.innerHTML=[...months].sort().reverse().map(m=>`<option value="${m}">${m.replace('-','年')}月</option>`).join('');
   // 区分プルダウンをその従業員の区分に合わせ、氏名を絞り込んで選択
   document.getElementById('pb-cat').value=empCat(name);
-  localStorage.setItem(PBCAT_KEY, JSON.stringify(empCat(name)));
+  set(PBCAT_KEY, empCat(name));
   pbBuildNameOptions(name);
   document.getElementById('page-main').style.display='none';
   document.getElementById('page-personal').classList.add('active');
@@ -1157,7 +1158,7 @@ let rateTab=load(RATETAB_KEY,"kyuyo");
 const ratesOf=(cat)=>load(RATE_CATS[cat].key,{});
 function setRateTab(cat){
   rateTab=cat;
-  localStorage.setItem(RATETAB_KEY,JSON.stringify(cat));
+  set(RATETAB_KEY,cat);
   renderRates();
 }
 let bulkRatesOpen=false;
