@@ -861,12 +861,12 @@ function renderRoster(){
   const byDate={};
   allLogs.forEach(x=>{ (byDate[x.date]=byDate[x.date]||new Set()).add(x.name); });
   const workedNames=new Set(allLogs.map(x=>x.name));
-  const names=emps().filter(n=>workedNames.has(n));
+  const names=rosterOrderedNames(emps().filter(n=>workedNames.has(n)));
   const memoAll=load(MK,{});
 
   document.getElementById('rs-thead').innerHTML = `<tr>
     <th>日付</th><th>曜</th>
-    ${names.map(n=>`<th>${esc(n)}</th>`).join('')}
+    ${names.map(n=>`<th data-name="${esc(n)}" style="cursor:grab;" onpointerdown="rsHeadDown(event,'${esc(n).replace(/'/g,"\\'")}')">${esc(n)}</th>`).join('')}
     <th>人数</th><th>備考</th>
   </tr>`;
 
@@ -904,6 +904,76 @@ function toggleRosterMark(name,date){
   }
   set(LK, updated);
   renderRoster();
+}
+// ── 出勤者一覧：氏名列のドラッグ並び替え ──
+const ROSTER_ORDER_KEY="kinmu_roster_order_v1";
+const rosterOrder=()=>load(ROSTER_ORDER_KEY, emps());
+function rosterOrderedNames(list){
+  const order=rosterOrder();
+  const idx=n=>{ const i=order.indexOf(n); return i===-1?999999:i; };
+  return [...list].sort((a,b)=>idx(a)-idx(b));
+}
+let rsDrag=null;
+function rsHeadDown(e,name){
+  if(e.button!=null && e.button!==0) return;
+  const el=e.currentTarget;
+  rsDrag={ name, el, pid:e.pointerId, startX:e.clientX, active:false, dead:false, longTimer:null, cols:null };
+  try{ el.setPointerCapture(e.pointerId); }catch(_){}
+  rsDrag.longTimer=setTimeout(rsHeadStartDrag,300);
+  el.addEventListener('pointermove', rsHeadMove);
+  el.addEventListener('pointerup', rsHeadUp);
+  el.addEventListener('pointercancel', rsHeadUp);
+}
+function rsHeadStartDrag(){
+  if(!rsDrag||rsDrag.dead) return;
+  rsDrag.active=true;
+  rsDrag.el.style.opacity='0.5';
+  rsDrag.cols=[...document.querySelectorAll('#roster-table thead th[data-name]')].map(el=>{
+    const r=el.getBoundingClientRect();
+    return {name:el.dataset.name, mid:r.left+r.width/2};
+  });
+}
+function rsHeadMove(e){
+  if(!rsDrag||rsDrag.dead) return;
+  const dx=e.clientX-rsDrag.startX;
+  if(!rsDrag.active){
+    if(Math.abs(dx)>10){ clearTimeout(rsDrag.longTimer); rsDrag.dead=true; }
+    return;
+  }
+  e.preventDefault();
+}
+function rsHeadUp(e){
+  if(!rsDrag) return;
+  clearTimeout(rsDrag.longTimer);
+  const el=rsDrag.el;
+  el.removeEventListener('pointermove', rsHeadMove);
+  el.removeEventListener('pointerup', rsHeadUp);
+  el.removeEventListener('pointercancel', rsHeadUp);
+  try{ el.releasePointerCapture(rsDrag.pid); }catch(_){}
+  const d=rsDrag; rsDrag=null;
+  if(d.el) d.el.style.opacity='';
+  if(d.active){
+    let idx=0;
+    for(const c of d.cols){ if(c.name===d.name) continue; if(c.mid<e.clientX) idx++; }
+    const visible=d.cols.map(c=>c.name).filter(n=>n!==d.name);
+    visible.splice(idx,0,d.name);
+    const master=rosterOrder().slice();
+    const withoutDragged=master.filter(n=>n!==d.name);
+    const newIdxInVisible=visible.indexOf(d.name);
+    let insertAt;
+    if(newIdxInVisible===0){
+      const next=visible[1];
+      insertAt = next!=null ? withoutDragged.indexOf(next) : withoutDragged.length;
+      if(insertAt===-1) insertAt=withoutDragged.length;
+    }else{
+      const prev=visible[newIdxInVisible-1];
+      const prevPos=withoutDragged.indexOf(prev);
+      insertAt = prevPos===-1 ? withoutDragged.length : prevPos+1;
+    }
+    withoutDragged.splice(insertAt,0,d.name);
+    set(ROSTER_ORDER_KEY, withoutDragged);
+    renderRoster();
+  }
 }
 const LB_CONTAINERS=["left-btn-space","future-btn-space-personal","future-btn-space-rates","future-btn-space-roster"];
 function toggleFMenu(ev,cid){
