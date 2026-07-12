@@ -653,7 +653,7 @@ function render(){
   // 従業員
   $("rmbtn").textContent = removeMode ? "✓ 完了" : "✏ 削除";
   $("emps").innerHTML=emps().map((name,i)=>{
-    const io=lastInOut(name);
+    const io=(empCat(name)==='senju') ? '出勤' : lastInOut(name);
     const eh=hoursOf(name,"早出"), oh=hoursOf(name,"残業");
     const ncls=removeMode?'name del':('name '+(io?'act':''));
     return `<div class="emp" data-emp="${i}">
