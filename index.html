@@ -884,13 +884,26 @@ function renderRoster(){
     rows+=`<tr class="${dayCls}">
       <td>${mo}/${d}</td>
       <td>${wdStr}</td>
-      ${names.map(n=>`<td>${attendedSet.has(n)?'〇':''}</td>`).join('')}
+      ${names.map(n=>`<td style="cursor:pointer;" onclick="toggleRosterMark('${esc(n).replace(/'/g,"\\'")}','${date}')">${attendedSet.has(n)?'〇':''}</td>`).join('')}
       <td>${cnt}</td>
       <td style="text-align:left;">${esc(memo)}</td>
     </tr>`;
   }
   rows+=`<tr style="font-weight:800;"><td colspan="${2+names.length}">合計人数</td><td>${totalCount}</td><td></td></tr>`;
   document.getElementById('rs-body').innerHTML=rows;
+}
+function toggleRosterMark(name,date){
+  const all=logs();
+  const has=all.some(x=>x.name===name && x.date===date && x.type==='出勤');
+  let updated;
+  if(has){
+    updated=all.filter(x=>!(x.name===name && x.date===date && x.type==='出勤'));
+  }else{
+    const n=new Date(); const time=`${pad(n.getHours())}:${pad(n.getMinutes())}`;
+    updated=all.concat([{name, date, type:'出勤', time}]);
+  }
+  set(LK, updated);
+  renderRoster();
 }
 const LB_CONTAINERS=["left-btn-space","future-btn-space-personal","future-btn-space-rates","future-btn-space-roster"];
 function toggleFMenu(ev,cid){
