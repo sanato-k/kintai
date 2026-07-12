@@ -248,7 +248,12 @@
        <h3 style="margin:0 0 14px; font-size:20px;">LINE送信プレビュー</h3>
        <div id="pb-line-content">
          <table id="pb-line-table" style="width:100%; border-collapse:collapse; font-size:16px;">
-           <thead><tr><th style="text-align:left; padding:6px 4px;">日付</th><th style="padding:6px 4px;">出勤</th><th style="text-align:right; padding:6px 4px;">給与</th><th style="text-align:right; padding:6px 4px;">時間外</th></tr></thead>
+           <colgroup><col style="width:32%;"><col style="width:18%;"><col></colgroup>
+           <thead><tr>
+             <th style="text-align:left; padding:6px 4px; border-bottom:2px solid var(--accent);">日付</th>
+             <th style="text-align:left; padding:6px 4px; border-bottom:2px solid var(--accent);">出勤</th>
+             <th style="text-align:right; padding:6px 4px; border-bottom:2px solid var(--accent);">給与</th>
+           </tr></thead>
            <tbody id="pb-line-body"></tbody>
          </table>
        </div>
@@ -1099,17 +1104,15 @@ function renderLinePanel(name, m, isKyuyo, rows){
   box.style.display='';
   const attended=rows.filter(r=>r.mark==='○');
   let baseSum=0, otSum=0;
-  let body=rows.map(r=>`<tr>
-    <td>${r.label}</td>
-    <td style="text-align:center;">${r.mark}</td>
-    <td style="text-align:right;">${r.mark?fmtNum(r.base):''}</td>
-    <td style="text-align:right;">${r.ot?fmtNum(r.ot):''}</td>
+  let body=rows.map(r=>`<tr style="border-bottom:1px solid var(--line);">
+    <td style="padding:5px 4px;">${r.label}</td>
+    <td style="text-align:left; padding:5px 4px;">${r.mark}</td>
+    <td style="text-align:right; padding:5px 4px;">${r.mark?fmtNum(r.base+r.ot):''}</td>
   </tr>`).join('');
   attended.forEach(r=>{ baseSum+=r.base; otSum+=r.ot; });
   body+=`<tr style="font-weight:800; border-top:2px solid var(--accent);">
-    <td>合計(${attended.length}日)</td><td></td>
-    <td style="text-align:right;">${fmtNum(baseSum)}</td>
-    <td style="text-align:right;">${otSum?fmtNum(otSum):''}</td>
+    <td style="padding:5px 4px;">合計(${attended.length}日)</td><td></td>
+    <td style="text-align:right; padding:5px 4px;">${fmtNum(baseSum+otSum)}</td>
   </tr>`;
   document.getElementById('pb-line-body').innerHTML=body;
 
@@ -1123,12 +1126,12 @@ function renderLinePanel(name, m, isKyuyo, rows){
   [weekendMap, weekdayMap].forEach(map=>{
     Object.keys(map).map(Number).sort((a,b)=>b-a).forEach(unit=>{
       const days=map[unit];
-      bdRows+=`<tr><td>${fmtNum(unit)}</td><td style="text-align:right;">${days}日</td><td style="text-align:right;">${fmtNum(unit*days)}円</td></tr>`;
+      bdRows+=`<tr style="border-bottom:1px solid var(--line);"><td style="padding:5px 4px;">${fmtNum(unit)}</td><td style="text-align:right; padding:5px 4px;">${days}日</td><td style="text-align:right; padding:5px 4px;">${fmtNum(unit*days)}円</td></tr>`;
     });
   });
-  let bdHtml=`<tr style="font-weight:800;"><td>合計</td><td style="text-align:right;">${attended.length}日</td><td style="text-align:right;">${fmtNum(baseSum)}円</td></tr>`;
+  let bdHtml=`<tr style="font-weight:800; border-bottom:1px solid var(--line);"><td style="padding:5px 4px;">合計</td><td style="text-align:right; padding:5px 4px;">${attended.length}日</td><td style="text-align:right; padding:5px 4px;">${fmtNum(baseSum)}円</td></tr>`;
   bdHtml+=bdRows;
-  if(otSum) bdHtml+=`<tr><td>時間外</td><td></td><td style="text-align:right;">${fmtNum(otSum)}円</td></tr>`;
+  if(otSum) bdHtml+=`<tr style="border-bottom:1px solid var(--line);"><td style="padding:5px 4px;">時間外</td><td></td><td style="text-align:right; padding:5px 4px;">${fmtNum(otSum)}円</td></tr>`;
   document.getElementById('pb-line-breakdown').innerHTML=bdHtml;
 
   const afterAll=load(LINE_MEMO_AFTER_KEY,{});
