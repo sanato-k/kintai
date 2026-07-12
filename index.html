@@ -162,6 +162,14 @@
   .rc-name-row .rc-name{ margin-bottom:0; }
   .rc-confirm-btn{ border:none; border-radius:8px; padding:8px 14px; font-size:13px;
         font-weight:800; color:#fff; background:var(--accent); flex-shrink:0; }
+  .lb-btn{ flex:0 0 64px; border:none; border-radius:10px; font-weight:800; font-size:17px;
+        touch-action:none; user-select:none; -webkit-user-select:none; position:relative; }
+  .lb-btn.dragging{ opacity:.5; transform:scale(1.04); z-index:5; }
+  .lb-btn.drag-target{ outline:2px dashed var(--accent); outline-offset:2px; }
+  .lb-menu{ display:none; position:absolute; left:100%; top:0; margin-left:6px; background:#fff;
+        border:1px solid var(--line); border-radius:10px; padding:6px; z-index:20;
+        flex-direction:column; gap:6px; white-space:nowrap; box-shadow:0 4px 16px rgba(20,30,80,.15); }
+  .lb-menu button{ border:none; border-radius:8px; padding:10px 14px; font-weight:800; font-size:16px; }
   .rate-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
   .rate-field{ display:flex; flex-direction:column; gap:3px; }
   .rate-field label{ font-size:11px; color:#5b639a; font-weight:700; }
@@ -251,25 +259,7 @@
 
   <div id="page-main">
   <div style="display:flex; gap:8px; align-items:stretch;">
-    <div id="left-btn-space" style="flex:0 0 100px; display:flex; flex-direction:column; gap:6px;">
-      <button style="flex:0 0 100px; border:none; border-radius:10px; font-weight:800;" onclick="クリック作動(event.currentTarget)">A</button>
-      <button style="flex:0 0 64px; border:none; border-radius:10px; font-weight:800;" onclick="クリック作動(event.currentTarget)">B</button>
-      <button style="flex:0 0 64px; border:none; border-radius:10px; font-weight:800;" onclick="クリック作動(event.currentTarget)">C</button>
-      <button style="flex:0 0 64px; border:none; border-radius:10px; font-weight:800;" onclick="クリック作動(event.currentTarget)">D</button>
-      <button style="flex:0 0 64px; border:none; border-radius:10px; font-weight:800;" onclick="クリック作動(event.currentTarget)">E</button>
-      <div style="flex:0 0 64px; position:relative;">
-        <button style="width:100%; height:100%; border:none; border-radius:10px; font-weight:800;" onclick="クリック作動(event.currentTarget);toggleFMenu(event)">給与賃金</button>
-        <div id="f-menu" style="display:none; position:absolute; left:100%; top:0; margin-left:6px; background:#fff; border:1px solid var(--line); border-radius:10px; padding:6px; z-index:20; flex-direction:column; gap:6px; white-space:nowrap; box-shadow:0 4px 16px rgba(20,30,80,.15);">
-          <button style="border:none; border-radius:8px; padding:10px 14px; font-weight:800;" onclick="pageNavGo('main');toggleFMenu()">出勤簿</button>
-          <button style="border:none; border-radius:8px; padding:10px 14px; font-weight:800;" onclick="pageNavGo('personal');toggleFMenu()">個人出勤簿</button>
-          <button style="border:none; border-radius:8px; padding:10px 14px; font-weight:800;" onclick="pageNavGo('rates');toggleFMenu()">単価</button>
-        </div>
-      </div>
-      <button style="flex:0 0 64px; border:none; border-radius:10px; font-weight:800;" onclick="クリック作動(event.currentTarget)">G</button>
-      <button style="flex:0 0 64px; border:none; border-radius:10px; font-weight:800;" onclick="クリック作動(event.currentTarget)">H</button>
-      <button style="flex:0 0 64px; border:none; border-radius:10px; font-weight:800;" onclick="クリック作動(event.currentTarget)">I</button>
-      <button style="flex:0 0 64px; border:none; border-radius:10px; font-weight:800;" onclick="クリック作動(event.currentTarget)">J</button>
-    </div>
+    <div id="left-btn-space" style="flex:0 0 100px; display:flex; flex-direction:column; gap:6px;"></div>
     <div style="flex:1; min-width:0;">
       <div class="topbar">
         <h1>📋 出勤簿</h1>
@@ -759,6 +749,85 @@ document.addEventListener('click',(ev)=>{
   const m=document.getElementById('f-menu');
   if(m && m.style.display==='flex' && !m.contains(ev.target)) m.style.display='none';
 });
+
+// ── 左側 A〜J ボタン（並び替え可能） ──
+const LB_ORDER_KEY="kinmu_lbtn_order_v1";
+const LB_IDS=["A","B","C","D","E","F","G","H","I","J"];
+const lbOrder=()=>load(LB_ORDER_KEY,LB_IDS);
+function lbBtnHTML(id){
+  if(id==="F"){
+    return `<div class="lb-btn" id="lb-F" style="padding:0;" data-id="F">
+      <button style="width:100%; height:100%; border:none; border-radius:10px; font-weight:800; font-size:15px;"
+        onpointerdown="lbDown(event,'F')" onclick="if(!lbSuppressClick){クリック作動(this);toggleFMenu(event);}">給与賃金</button>
+      <div class="lb-menu" id="f-menu">
+        <button onclick="pageNavGo('main');toggleFMenu()">出勤簿</button>
+        <button onclick="pageNavGo('personal');toggleFMenu()">個人出勤簿</button>
+        <button onclick="pageNavGo('rates');toggleFMenu()">単価</button>
+      </div>
+    </div>`;
+  }
+  return `<button class="lb-btn" id="lb-${id}" data-id="${id}"
+    onpointerdown="lbDown(event,'${id}')" onclick="if(!lbSuppressClick) クリック作動(this)">${id}</button>`;
+}
+function renderLeftBtns(){
+  document.getElementById('left-btn-space').innerHTML = lbOrder().map(lbBtnHTML).join("");
+}
+let lbDrag=null, lbSuppressClick=false;
+function lbDown(e,id){
+  if(e.button!=null && e.button!==0) return;
+  const el=document.getElementById('lb-'+id);
+  lbDrag={ id, el, pid:e.pointerId, startX:e.clientX, startY:e.clientY, active:false, dead:false, longTimer:null, rows:null };
+  lbSuppressClick=false;
+  try{ el.setPointerCapture(e.pointerId); }catch(_){}
+  lbDrag.longTimer=setTimeout(lbStartDrag,300);
+  el.addEventListener('pointermove',lbMove);
+  el.addEventListener('pointerup',lbUp);
+  el.addEventListener('pointercancel',lbUp);
+}
+function lbStartDrag(){
+  if(!lbDrag||lbDrag.dead) return;
+  lbDrag.active=true; lbSuppressClick=true;
+  lbDrag.el.classList.add('dragging');
+  lbDrag.rows=[...document.querySelectorAll('#left-btn-space > *')].map(el=>{
+    const r=el.getBoundingClientRect();
+    return {el, mid:r.top+r.height/2, top:r.top, bottom:r.bottom, id:el.dataset.id};
+  });
+}
+function lbMove(e){
+  if(!lbDrag||lbDrag.dead) return;
+  const dx=e.clientX-lbDrag.startX, dy=e.clientY-lbDrag.startY;
+  if(!lbDrag.active){
+    if(Math.abs(dx)>10||Math.abs(dy)>10){ clearTimeout(lbDrag.longTimer); lbDrag.dead=true; }
+    return;
+  }
+  e.preventDefault();
+  lbDrag.el.style.transform=`translateY(${dy}px) scale(1.04)`;
+  const y=e.clientY;
+  lbDrag.rows.forEach(r=>r.el.classList.toggle('drag-target', r.id!==lbDrag.id && y>=r.top && y<=r.bottom));
+}
+function lbUp(e){
+  if(!lbDrag) return;
+  clearTimeout(lbDrag.longTimer);
+  const el=lbDrag.el;
+  el.removeEventListener('pointermove',lbMove);
+  el.removeEventListener('pointerup',lbUp);
+  el.removeEventListener('pointercancel',lbUp);
+  try{ el.releasePointerCapture(lbDrag.pid); }catch(_){}
+  const d=lbDrag; lbDrag=null;
+  if(d.active){
+    let idx=0;
+    for(const r of d.rows){ if(r.id===d.id) continue; if(r.mid<e.clientY) idx++; }
+    d.el.classList.remove('dragging'); d.el.style.transform='';
+    const arr=lbOrder().filter(x=>x!==d.id);
+    arr.splice(idx,0,d.id);
+    set(LB_ORDER_KEY,arr);
+    renderLeftBtns();
+    setTimeout(()=>{ lbSuppressClick=false; },50);
+  }else{
+    setTimeout(()=>{ lbSuppressClick=false; },0);
+  }
+}
+renderLeftBtns();
 // 個人出勤簿：区分プルダウンの選択を端末に記憶
 const PBCAT_KEY="kinmu_pbcat_v1";
 // 単価区分に応じて氏名プルダウンを絞り込んで構築
