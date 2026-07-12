@@ -762,13 +762,20 @@ function toggleFMenu(ev,cid){
 }
 // 押した瞬間(pointerdown)にサブメニューを開く。離しても閉じず、選択 or 外タップで閉じる。
 // ※ 今後サブメニューを新しく作るときも、この openFMenu パターン（pointerdownで即オープン）を使う。
+const fMenuCloseTimers={};
 function openFMenu(cid){
+  if(fMenuCloseTimers[cid]){ clearTimeout(fMenuCloseTimers[cid]); fMenuCloseTimers[cid]=null; }
   LB_CONTAINERS.forEach(c=>{ const mm=document.getElementById('f-menu-'+c); if(mm) mm.style.display=(c===cid)?'flex':'none'; });
 }
-// PCでマウスがメニューバー(給与賃金ボタン)から離れたら閉じる（タッチ操作では発火しないため両立可能）
+// PCでマウスがメニューバー(給与賃金ボタン)から離れたら1秒待ってから閉じる。
+// その1秒の間に戻ってくれば(openFMenu再実行)キャンセルされる。
 function closeFMenu(cid){
-  const m=document.getElementById('f-menu-'+cid);
-  if(m) m.style.display='none';
+  if(fMenuCloseTimers[cid]) clearTimeout(fMenuCloseTimers[cid]);
+  fMenuCloseTimers[cid]=setTimeout(()=>{
+    const m=document.getElementById('f-menu-'+cid);
+    if(m) m.style.display='none';
+    fMenuCloseTimers[cid]=null;
+  },1000);
 }
 document.addEventListener('click',(ev)=>{
   LB_CONTAINERS.forEach(cid=>{
