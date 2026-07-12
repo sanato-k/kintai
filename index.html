@@ -125,8 +125,9 @@
   .pb-table th:last-child{ border-right:none; }
   .pb-table td{ padding:7px 4px; text-align:center; border-bottom:1px solid var(--line); border-right:1px solid var(--line); }
   .pb-table td:last-child{ border-right:none; }
-  .pb-table col.pb-col-date{ width:11%; }
+  .pb-table col.pb-col-date{ width:8%; }
   .pb-table col.pb-col-wd{ width:3.7%; }
+  .pb-table col.pb-col-mark{ width:9%; }
   .pb-table col.pb-col-amt{ width:19%; }
   .pb-table tr.saturday td{ background:#eaf2ff; }
   .pb-table tr.sunday td{ background:#ffeef0; }
@@ -222,7 +223,7 @@
 
     <table class="pb-table">
       <colgroup>
-        <col class="pb-col-date"><col class="pb-col-wd"><col><col><col><col><col class="pb-col-amt">
+        <col class="pb-col-date"><col class="pb-col-wd"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-amt">
       </colgroup>
       <thead><tr><th>日付</th><th>曜</th><th>出勤</th><th>早退</th><th>早出</th><th>残業</th><th>金額</th></tr></thead>
       <tbody id="pb-body"></tbody>
