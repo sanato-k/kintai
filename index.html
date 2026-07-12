@@ -112,6 +112,23 @@
   /* ── 個人別出勤簿ページ ── */
   #page-personal{ display:none; padding:14px 14px 96px; }
   #page-personal.active{ display:block; }
+  /* ── 出勤者一覧ページ ── */
+  #page-roster{ display:none; padding:14px 14px 96px; }
+  #page-roster.active{ display:block; }
+  .roster-table{ width:100%; border-collapse:collapse; font-size:14px; table-layout:fixed; }
+  .roster-table th{ background:var(--accent); color:#fff; padding:8px 4px; text-align:center; border-right:1px solid rgba(255,255,255,.35); }
+  .roster-table th:last-child{ border-right:none; }
+  .roster-table td{ padding:7px 4px; text-align:left; border-bottom:1px solid var(--line); border-right:1px solid var(--line); }
+  .roster-table td:last-child{ border-right:none; }
+  .roster-table col.rs-date{ width:9%; }
+  .roster-table col.rs-wd{ width:5%; }
+  .roster-table col.rs-cnt{ width:7%; }
+  .roster-table col.rs-memo{ width:22%; }
+  .roster-table tr.saturday td{ background:#eaf2ff; }
+  .roster-table tr.sunday td{ background:#ffeef0; }
+  .roster-table tr.holiday td{ background:#ffeef0; }
+  .roster-table tr.saturday td:nth-child(2){ color:#1d4ed8; font-weight:800; }
+  .roster-table tr.sunday td:nth-child(2), .roster-table tr.holiday td:nth-child(2){ color:#db2777; font-weight:800; }
   .pb-head{ display:flex; align-items:center; gap:10px; margin-bottom:14px; }
   .pb-back{ background:var(--accent); color:#fff; border:none; border-radius:10px; padding:10px 16px; font-size:15px; font-weight:800; cursor:pointer; }
   .pb-title{ font-size:20px; font-weight:800; }
@@ -301,6 +318,29 @@
     <div class="rate-card" id="rate-bulk" style="border:2px solid var(--accent); display:none;"></div>
     <div id="rates-list"></div>
     <button class="rate-export" onclick="exportRatesCSV()">単価をCSVで送信 ▶</button>
+    </div>
+   </div>
+  </div>
+
+  <!-- 出勤者一覧ページ -->
+  <div id="page-roster">
+   <div style="display:flex; gap:8px; align-items:stretch;">
+    <div id="future-btn-space-roster" style="flex:0 0 160px; display:flex; flex-direction:column; gap:6px;"></div>
+    <div style="flex:1; min-width:0;">
+    <div class="pb-head">
+      <button class="pb-back" onclick="showMain()">← 戻る</button>
+      <span class="pb-title">出勤者一覧</span>
+    </div>
+    <div class="pb-controls">
+      <select id="rs-month" onchange="renderRoster()"></select>
+    </div>
+    <table class="roster-table" id="roster-table">
+      <colgroup>
+        <col class="rs-date"><col class="rs-wd"><col><col class="rs-cnt"><col class="rs-memo">
+      </colgroup>
+      <thead><tr><th>日付</th><th>曜</th><th>出勤者</th><th>人数</th><th>備考</th></tr></thead>
+      <tbody id="rs-body"></tbody>
+    </table>
     </div>
    </div>
   </div>
@@ -777,6 +817,7 @@ syncPullAll().finally(()=>{ renderPower(); render(); });
 function renderCurrentPage(){
   if(document.getElementById('page-rates').classList.contains('active')) renderRates();
   else if(document.getElementById('page-personal').classList.contains('active')) renderPersonal();
+  else if(document.getElementById('page-roster').classList.contains('active')) renderRoster();
   else render();
 }
 setInterval(()=>{ syncPullAll().then(ok=>{ if(ok) renderCurrentPage(); }); }, 15000); // 15秒ごとに他端末の更新を取り込む
@@ -785,6 +826,7 @@ setInterval(()=>{ syncPullAll().then(ok=>{ if(ok) renderCurrentPage(); }); }, 15
 function showMain(){
   document.getElementById('page-personal').classList.remove('active');
   document.getElementById('page-rates').classList.remove('active');
+  document.getElementById('page-roster').classList.remove('active');
   document.getElementById('page-main').style.display='';
   syncPageNavSel('main');
   render();
@@ -798,8 +840,56 @@ function pageNavGo(val){
   if(val==='main') showMain();
   else if(val==='personal') showPersonal();
   else if(val==='rates') showRates();
+  else if(val==='roster') showRoster();
 }
-const LB_CONTAINERS=["left-btn-space","future-btn-space-personal","future-btn-space-rates"];
+function showRoster(){
+  document.getElementById('page-main').style.display='none';
+  document.getElementById('page-personal').classList.remove('active');
+  document.getElementById('page-rates').classList.remove('active');
+  document.getElementById('page-roster').classList.add('active');
+  syncPageNavSel('roster');
+  const months=new Set();
+  months.add(today().slice(0,7));
+  logs().forEach(x=>{ if(x.date) months.add(x.date.slice(0,7)); });
+  const msel=document.getElementById('rs-month');
+  const curM=msel.value;
+  msel.innerHTML=[...months].sort().reverse().map(m=>`<option value="${m}" ${m===curM?'selected':''}>${m.replace('-','年')}月</option>`).join('');
+  if(!msel.value) msel.value=today().slice(0,7);
+  renderRoster();
+  syncPullAll().then(ok=>{ if(ok) renderRoster(); });
+}
+function renderRoster(){
+  const ym=document.getElementById('rs-month').value;
+  if(!ym) return;
+  const [y,mo]=ym.split('-').map(Number);
+  const days=new Date(y,mo,0).getDate();
+  const allLogs=logs().filter(x=>x.date && x.date.startsWith(ym) && x.type==='出勤');
+  const byDate={};
+  allLogs.forEach(x=>{ (byDate[x.date]=byDate[x.date]||[]).push(x.name); });
+  const memoAll=load(MK,{});
+  let rows='', totalCount=0;
+  for(let d=1; d<=days; d++){
+    const date=`${ym}-${String(d).padStart(2,'0')}`;
+    const wd=new Date(date+'T00:00').getDay();
+    const wdStr='日月火水木金土'[wd];
+    const isHol=isHoliday(date);
+    const dayCls = isHol ? 'holiday' : (wd===6 ? 'saturday' : (wd===0 ? 'sunday' : ''));
+    const names=(byDate[date]||[]).join('、');
+    const cnt=(byDate[date]||[]).length;
+    totalCount+=cnt;
+    const memo=memoAll[date]||'';
+    rows+=`<tr class="${dayCls}">
+      <td>${mo}/${d}</td>
+      <td>${wdStr}</td>
+      <td>${esc(names)}</td>
+      <td style="text-align:center;">${cnt}</td>
+      <td>${esc(memo)}</td>
+    </tr>`;
+  }
+  rows+=`<tr style="font-weight:800;"><td colspan="3">合計人数</td><td style="text-align:center;">${totalCount}</td><td></td></tr>`;
+  document.getElementById('rs-body').innerHTML=rows;
+}
+const LB_CONTAINERS=["left-btn-space","future-btn-space-personal","future-btn-space-rates","future-btn-space-roster"];
 function toggleFMenu(ev,cid){
   if(ev) ev.stopPropagation();
   if(!cid){ const b=ev&&ev.currentTarget&&ev.currentTarget.closest('[id^="lb-"]'); cid=b?b.id.split('-').slice(1,-1).join('-'):LB_CONTAINERS[0]; }
@@ -849,6 +939,7 @@ function lbBtnHTML(id,cid){
         <button onclick="pageNavGo('main');toggleFMenu(null,'${cid}')">出勤簿</button>
         <button onclick="pageNavGo('personal');toggleFMenu(null,'${cid}')">個人出勤簿</button>
         <button onclick="pageNavGo('rates');toggleFMenu(null,'${cid}')">給与賃金</button>
+        <button onclick="pageNavGo('roster');toggleFMenu(null,'${cid}')">出勤者一覧</button>
       </div>
     </div>`;
   }
@@ -951,6 +1042,7 @@ function showPersonalFor(i){
   set(PBCAT_KEY, empCat(name));
   pbBuildNameOptions(name);
   document.getElementById('page-main').style.display='none';
+  document.getElementById('page-roster').classList.remove('active');
   document.getElementById('page-personal').classList.add('active');
   syncPageNavSel('personal');
   renderPersonal();
@@ -977,6 +1069,7 @@ function showPersonal(){
   msel.innerHTML=[...months].sort().reverse().map(m=>`<option value="${m}" ${m===curM?'selected':''}>${m.replace('-','年')}月</option>`).join('');
 
   document.getElementById('page-main').style.display='none';
+  document.getElementById('page-roster').classList.remove('active');
   document.getElementById('page-personal').classList.add('active');
   syncPageNavSel('personal');
   renderPersonal();
@@ -1311,6 +1404,7 @@ function toggleBulkRates(){
 function showRates(){
   document.getElementById('page-main').style.display='none';
   document.getElementById('page-personal').classList.remove('active');
+  document.getElementById('page-roster').classList.remove('active');
   document.getElementById('page-rates').classList.add('active');
   syncPageNavSel('rates');
   renderRates();
