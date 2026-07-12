@@ -214,13 +214,15 @@
     <div class="pb-controls">
       <select id="pb-cat" onchange="pbCatChanged()">
         <option value="kyuyo">給与賃金</option>
+        <option value="senju">専従者</option>
         <option value="other">その他</option>
       </select>
       <select id="pb-name" onchange="pbSelDate=null;renderPersonal()"></select>
       <select id="pb-month" onchange="pbSelDate=null;renderPersonal()"></select>
     </div>
 
-    <table class="pb-table">
+    <div id="pb-senju-sheet" style="display:none;"></div>
+    <table class="pb-table" id="pb-daily-table">
       <colgroup>
         <col class="pb-col-date"><col class="pb-col-wd"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-amt">
       </colgroup>
@@ -943,10 +945,52 @@ function showPersonal(){
   renderPersonal();
   syncPullAll().then(ok=>{ if(ok) renderPersonal(); });
 }
+function renderPbSenjuSheet(name){
+  const cfg=RATE_CATS.senju;
+  const r=ratesOf('senju')[name]||{};
+  const nameEsc=esc(name).replace(/'/g,"\\'");
+  const fields=cfg.fields.map(([k,label])=>`
+    <div class="rate-field">
+      <label>${label}</label>
+      <input type="number" inputmode="decimal" id="pbsj-${k}" value="${r[k]!=null?r[k]:''}">
+    </div>`).join("");
+  document.getElementById('pb-senju-sheet').innerHTML = `
+    <div class="rate-card">
+      <div class="rc-name-row">
+        <div class="rc-name">${esc(name)} — 専従者シート</div>
+        <button class="rc-confirm-btn" onclick="pbSenjuSave('${nameEsc}')">決定</button>
+      </div>
+      <div class="rate-grid bulk-row">${fields}</div>
+    </div>`;
+}
+function pbSenjuSave(name){
+  const cfg=RATE_CATS.senju;
+  const all=ratesOf('senju');
+  if(!all[name]) all[name]={};
+  cfg.fields.forEach(([k])=>{
+    const el=document.getElementById(`pbsj-${k}`);
+    if(el) all[name][k] = el.value===""?null:parseFloat(el.value);
+  });
+  set(RATE_CATS.senju.key,all);
+  renderPbSenjuSheet(name);
+}
 function renderPersonal(){
   const name=document.getElementById('pb-name').value;
   const ym=document.getElementById('pb-month').value;
   if(!name||!ym) return;
+  const cat=document.getElementById('pb-cat').value;
+  if(cat==='senju'){
+    document.getElementById('pb-daily-table').style.display='none';
+    document.getElementById('pb-input').classList.remove('active');
+    document.getElementById('pb-summary').style.display='none';
+    document.getElementById('pb-senju-sheet').style.display='block';
+    renderPbSenjuSheet(name);
+    return;
+  }else{
+    document.getElementById('pb-daily-table').style.display='';
+    document.getElementById('pb-summary').style.display='';
+    document.getElementById('pb-senju-sheet').style.display='none';
+  }
   const [y,m]=ym.split('-').map(Number);
   const days=new Date(y,m,0).getDate();
   const myLogs=logs().filter(x=>x.name===name && x.date && x.date.startsWith(ym));
