@@ -857,10 +857,11 @@ function renderRoster(){
   if(!ym) return;
   const [y,mo]=ym.split('-').map(Number);
   const days=new Date(y,mo,0).getDate();
-  const names=emps();
   const allLogs=logs().filter(x=>x.date && x.date.startsWith(ym) && x.type==='出勤');
   const byDate={};
   allLogs.forEach(x=>{ (byDate[x.date]=byDate[x.date]||new Set()).add(x.name); });
+  const workedNames=new Set(allLogs.map(x=>x.name));
+  const names=emps().filter(n=>workedNames.has(n));
   const memoAll=load(MK,{});
 
   document.getElementById('rs-thead').innerHTML = `<tr>
