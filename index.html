@@ -326,22 +326,7 @@ const empCat=(name)=>{
   if(saved) return saved;
   return SENJU_DEFAULT.includes(name) ? "senju" : "kyuyo";
 };
-
-// ── 専従者の表示/非表示トグル ──
 const SENJU_VISIBLE_KEY="kinmu_senju_visible_v1";
-let senjuVisible=load(SENJU_VISIBLE_KEY,true);
-function toggleSenjuVisible(){
-  senjuVisible=!senjuVisible;
-  localStorage.setItem(SENJU_VISIBLE_KEY,JSON.stringify(senjuVisible));
-  render();
-}
-function updateSenjuToggleBtn(){
-  const btn=document.getElementById('senjuToggleBtn');
-  if(!btn) return;
-  btn.style.setProperty('background', senjuVisible?'#dcfce7':'#ffffff', 'important');
-  btn.style.setProperty('color', senjuVisible?'#14532d':'#334155', 'important');
-  btn.style.border = senjuVisible ? 'none' : '1px solid var(--line)';
-}
 let removeMode=false;
 
 // ── 日本の祝日判定（簡易版。振替休日対応） ──
@@ -416,6 +401,21 @@ async function syncPullAll(){
     });
     return true;
   }catch(e){ return false; }
+}
+
+// ── 専従者の表示/非表示トグル ──
+let senjuVisible=load(SENJU_VISIBLE_KEY,true);
+function toggleSenjuVisible(){
+  senjuVisible=!senjuVisible;
+  localStorage.setItem(SENJU_VISIBLE_KEY,JSON.stringify(senjuVisible));
+  render();
+}
+function updateSenjuToggleBtn(){
+  const btn=document.getElementById('senjuToggleBtn');
+  if(!btn) return;
+  btn.style.setProperty('background', senjuVisible?'#dcfce7':'#ffffff', 'important');
+  btn.style.setProperty('color', senjuVisible?'#14532d':'#334155', 'important');
+  btn.style.border = senjuVisible ? 'none' : '1px solid var(--line)';
 }
 function forcePushAll(ev){
   クリック作動(ev && ev.currentTarget);
