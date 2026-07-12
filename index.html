@@ -252,6 +252,7 @@
            <tbody id="pb-line-body"></tbody>
          </table>
        </div>
+       <table id="pb-line-breakdown" style="width:100%; border-collapse:collapse; font-size:16px; margin-top:12px;"></table>
        <div style="margin-top:16px;">
          <label style="font-size:14px; color:var(--muted);">送信前メモ</label>
          <textarea id="pb-line-memo-before" rows="3" style="width:100%; box-sizing:border-box; font-size:15px;" placeholder="例：今月もありがとうございます"></textarea>
@@ -1050,8 +1051,8 @@ function renderPersonal(){
     if(eRec) hayade+=parseFloat(eRec.hours)||0;
     if(oRec) zangyou+=parseFloat(oRec.hours)||0;
     let baseTxt='', otTxt='', totalTxt='', baseAmt=0, otAmt=0;
+    const isWknd = isHol || wd===6 || wd===0;
     if(isKyuyo && (hasIn||hasOut||eRec||oRec)){
-      const isWknd = isHol || wd===6 || wd===0;
       if(hasIn) baseAmt += Number((isWknd?kRate.doniti:kRate.heijitsu))||0;
       if(hasOut) baseAmt -= Number(kRate.sotai)||0;
       if(eRec) otAmt += (parseFloat(eRec.hours)||0) * (Number(kRate.hayade)||0);
@@ -1060,7 +1061,7 @@ function renderPersonal(){
       otTxt = otAmt ? fmtNum(otAmt) : '';
       totalTxt = fmtNum(baseAmt+otAmt);
     }
-    if(isKyuyo) linePreviewRows.push({label:`${m}/${d}(${wdStr})`, mark:hasIn?'○':'', base:baseAmt, ot:otAmt});
+    if(isKyuyo) linePreviewRows.push({label:`${m}/${d}(${wdStr})`, mark:hasIn?'○':'', base:baseAmt, ot:otAmt, isWknd});
     rows+=`<tr class="${dayCls} ${date===pbSelDate?'sel':''}" onclick="pbSelectDay('${date}')">
       <td>${m}/${d}</td>
       <td>${wdStr}</td>
@@ -1111,6 +1112,24 @@ function renderLinePanel(name, m, isKyuyo, rows){
     <td style="text-align:right;">${otSum?fmtNum(otSum):''}</td>
   </tr>`;
   document.getElementById('pb-line-body').innerHTML=body;
+
+  // 単価ごとの日数・小計の内訳(週末優先→平日、Excel明細と同じ並び)
+  const weekendMap={}, weekdayMap={};
+  attended.forEach(r=>{
+    const map = r.isWknd ? weekendMap : weekdayMap;
+    map[r.base] = (map[r.base]||0) + 1;
+  });
+  let bdRows='';
+  [weekendMap, weekdayMap].forEach(map=>{
+    Object.keys(map).map(Number).sort((a,b)=>b-a).forEach(unit=>{
+      const days=map[unit];
+      bdRows+=`<tr><td>${fmtNum(unit)}</td><td style="text-align:right;">${days}日</td><td style="text-align:right;">${fmtNum(unit*days)}円</td></tr>`;
+    });
+  });
+  let bdHtml=`<tr style="font-weight:800;"><td>合計</td><td style="text-align:right;">${attended.length}日</td><td style="text-align:right;">${fmtNum(baseSum)}円</td></tr>`;
+  bdHtml+=bdRows;
+  if(otSum) bdHtml+=`<tr><td>時間外</td><td></td><td style="text-align:right;">${fmtNum(otSum)}円</td></tr>`;
+  document.getElementById('pb-line-breakdown').innerHTML=bdHtml;
 
   const afterAll=load(LINE_MEMO_AFTER_KEY,{});
   document.getElementById('pb-line-memo-after').value = afterAll[pbLineMemoKey(name,ym)] || '';
