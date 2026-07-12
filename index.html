@@ -1435,7 +1435,7 @@ function renderRates(){
 
   const all=ratesOf(rateTab);
   const targetEmps = emps().filter(name=>empCat(name)===rateTab);
-  const useEnterKey = rateTab==='senju' || rateTab==='kyuyo';
+  const useEnterKey = true;
   document.getElementById('rates-list').innerHTML = (targetEmps.length?targetEmps:['(この区分の従業員はいません)']).map((name,idx)=>{
     if(name==='(この区分の従業員はいません)') return `<div class="rate-card" style="text-align:center;color:#8a93b8;">${name}</div>`;
     const r=all[name]||{};
