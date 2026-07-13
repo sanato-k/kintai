@@ -1459,7 +1459,8 @@ function pbToggle(type){
   const exists=recs.some(r=>r.type===type);
   if(exists){
     const name=document.getElementById('pb-name').value;
-    set(LK, logs().filter(x=>!(x.date===pbSelDate && x.name===name && x.type===type)));
+    const removeTypes = type==='出勤' ? ['出勤','早退'] : [type];
+    set(LK, logs().filter(x=>!(x.date===pbSelDate && x.name===name && removeTypes.includes(x.type))));
     clearSent(pbSelDate);
     renderPersonal();
   }else{
@@ -1494,7 +1495,8 @@ function pbCellToggle(ev,date,type){
   if(!name) return;
   const exists=logs().some(x=>x.name===name && x.date===date && x.type===type);
   if(exists){
-    set(LK, logs().filter(x=>!(x.date===date && x.name===name && x.type===type)));
+    const removeTypes = type==='出勤' ? ['出勤','早退'] : [type];
+    set(LK, logs().filter(x=>!(x.date===date && x.name===name && removeTypes.includes(x.type))));
     clearSent(date);
     renderPersonal();
   }else{
