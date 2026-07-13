@@ -159,7 +159,7 @@
   .pb-summary h3{ margin:0 0 10px; font-size:16px; }
   .pb-sum-row{ display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--line); font-size:15px; }
   .pb-sum-row:last-child{ border-bottom:none; font-weight:800; }
-  #pb-line-table td, #pb-line-table th, #pb-line-breakdown td{ border-color:#3b82f6 !important; }
+  #pb-line-content{ border:2px solid #3b82f6; }
   .pb-table tr.sel td{ outline:2px solid var(--accent); outline-offset:-2px; }
   .pb-input{ display:none; background:var(--card); border-radius:12px; padding:14px; margin:10px 0; }
   .pb-input.active{ display:block; }
@@ -1330,7 +1330,7 @@ function renderLinePanel(name, m, isKyuyo, rows){
     <td style="padding:6px 4px; border-right:1px solid var(--line);">合計</td><td style="text-align:left; padding:6px 4px; border-right:1px solid var(--line);">${attended.length}日</td>
     <td style="text-align:right; padding:6px 4px;">${fmtNum(baseSum+otSum)}</td>
   </tr>`;
-  body+=`<tr style="font-weight:800; background:#dbeafe; color:#000;">
+  body+=`<tr style="font-weight:800; background:#dbeafe; color:#000; border-top:2px solid #3b82f6;">
     <td style="padding:6px 4px; border-right:1px solid var(--line);">休みの日数</td><td style="text-align:left; padding:6px 4px; border-right:1px solid var(--line);">${offCount}日</td>
     <td></td>
   </tr>`;
