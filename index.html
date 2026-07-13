@@ -1280,10 +1280,10 @@ function renderPersonal(){
     rows+=`<tr class="${dayCls} ${date===pbSelDate?'sel':''}" onclick="pbSelectDay('${date}')">
       <td>${m}/${d}</td>
       <td>${wdStr}</td>
-      <td class="tag-in">${hasIn?(hasOut?'◐':'○'):''}</td>
-      <td class="tag-out">${hasOut?'早退':''}</td>
-      <td class="tag-e">${eRec?(eRec.hours+'h'):''}</td>
-      <td class="tag-o">${oRec?(oRec.hours+'h'):''}</td>
+      <td class="tag-in" style="cursor:pointer;" onclick="pbCellToggle(event,'${date}','出勤')">${hasIn?(hasOut?'◐':'○'):''}</td>
+      <td class="tag-out" style="cursor:pointer;" onclick="pbCellToggle(event,'${date}','早退')">${hasOut?'早退':''}</td>
+      <td class="tag-e" style="cursor:pointer;" onclick="pbCellHours(event,'${date}','早出')">${eRec?(eRec.hours+'h'):''}</td>
+      <td class="tag-o" style="cursor:pointer;" onclick="pbCellHours(event,'${date}','残業')">${oRec?(oRec.hours+'h'):''}</td>
       <td class="tag-amt">${baseTxt}</td>
       <td class="tag-amt">${otTxt}</td>
       <td class="tag-amt">${totalTxt}</td>
@@ -1473,6 +1473,43 @@ function pbHours(type){
     const v=parseFloat(h);
     if(isNaN(v)||v<=0){ uiAlert("数値を入れてください"); return; }
     pbPunch(type,v);
+  }, true);
+}
+// ── 表のセルを直接クリックして出勤/早退/早出/残業をオンオフ ──
+function pbCellPunch(date,type,hours){
+  const name=document.getElementById('pb-name').value;
+  if(!name||!date) return;
+  const n=new Date(); const time=`${pad(n.getHours())}:${pad(n.getMinutes())}`;
+  const arr=logs();
+  const i=arr.findIndex(x=>x.date===date && x.name===name && x.type===type);
+  const rec={date,time,name,type,hours:hours||"",ts:Date.now()};
+  if(i>=0) arr[i]=rec; else arr.unshift(rec);
+  set(LK,arr);
+  clearSent(date);
+  renderPersonal();
+}
+function pbCellToggle(ev,date,type){
+  ev.stopPropagation();
+  const name=document.getElementById('pb-name').value;
+  if(!name) return;
+  const exists=logs().some(x=>x.name===name && x.date===date && x.type===type);
+  if(exists){
+    set(LK, logs().filter(x=>!(x.date===date && x.name===name && x.type===type)));
+    clearSent(date);
+    renderPersonal();
+  }else{
+    pbCellPunch(date,type);
+  }
+}
+function pbCellHours(ev,date,type){
+  ev.stopPropagation();
+  const name=document.getElementById('pb-name').value;
+  if(!name) return;
+  const rec=logs().find(x=>x.name===name && x.date===date && x.type===type);
+  uiPrompt(`${type}時間（h）`, rec?rec.hours:"1", (h)=>{
+    const v=parseFloat(h);
+    if(isNaN(v)||v<=0){ uiAlert("数値を入れてください"); return; }
+    pbCellPunch(date,type,v);
   }, true);
 }
 function pbClearDay(){
