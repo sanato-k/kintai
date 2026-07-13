@@ -1122,7 +1122,11 @@ function pbMonthFiscalYm(monthNum){
 }
 function pbSelectMonth(ym){
   pbSelDate=null;
-  document.getElementById('pb-month').value=ym;
+  const msel=document.getElementById('pb-month');
+  if(![...msel.options].some(o=>o.value===ym)){
+    msel.insertAdjacentHTML('beforeend', `<option value="${ym}">${ym.replace('-','年')}月</option>`);
+  }
+  msel.value=ym;
   set(PBMONTH_KEY,ym);
   renderPersonal();
   renderPbMonthButtons();
