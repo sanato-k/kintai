@@ -1296,6 +1296,7 @@ function renderPersonal(){
     const hasIn=!!inRec;
     const frac = inRec ? (inRec.hours==='1/2'?0.5 : inRec.hours==='1/3'?(1/3) : 1) : 0;
     const inMark = inRec ? (inRec.hours==='1/2'?'1/2' : inRec.hours==='1/3'?'1/3' : '○') : '';
+    const lineMark = inRec ? (inRec.hours==='1/2'?'早退' : inRec.hours==='1/3'?'早退' : '○') : '';
     const eRec=recs.find(r=>r.type==='早出');
     const oRec=recs.find(r=>r.type==='残業');
     if(hasIn) shukin++;
@@ -1311,7 +1312,7 @@ function renderPersonal(){
       otTxt = otAmt ? fmtNum(otAmt) : '';
       totalTxt = fmtNum(baseAmt+otAmt);
     }
-    if(isKyuyo) linePreviewRows.push({label:`${m}/${d}(${wdStr})`, mark:inMark, base:baseAmt, ot:otAmt, isWknd, isSat:wd===6, isSunHol:(wd===0||isHol)});
+    if(isKyuyo) linePreviewRows.push({label:`${m}/${d}(${wdStr})`, mark:lineMark, base:baseAmt, ot:otAmt, isWknd, isSat:wd===6, isSunHol:(wd===0||isHol)});
     rows+=`<tr class="${dayCls} ${date===pbSelDate?'sel':''}" onclick="pbSelectDay('${date}')">
       <td>${m}/${d}</td>
       <td>${wdStr}</td>
@@ -1422,10 +1423,11 @@ async function sendLineNow(el){
   try{
     const image=await captureLinePreview();
     const memoBefore=document.getElementById('pb-line-memo-before').value;
+    const memoAfter=document.getElementById('pb-line-memo-after').value;
     const res=await fetch(`${SYNC_URL}/line-send`,{
       method:'POST',
       headers:{'Content-Type':'application/json','X-Upload-Key':SYNC_KEY},
-      body:JSON.stringify({image, memoBefore})
+      body:JSON.stringify({image, memoBefore, memoAfter})
     });
     status.textContent = res.ok ? '送信しました' : '送信エラー';
   }catch(e){ status.textContent='送信エラー: '+e; }
@@ -1439,10 +1441,11 @@ async function scheduleLineSend(el){
   try{
     const image=await captureLinePreview();
     const memoBefore=document.getElementById('pb-line-memo-before').value;
+    const memoAfter=document.getElementById('pb-line-memo-after').value;
     const res=await fetch(`${SYNC_URL}/line-schedule`,{
       method:'POST',
       headers:{'Content-Type':'application/json','X-Upload-Key':SYNC_KEY},
-      body:JSON.stringify({image, memoBefore, sendAt:new Date(at).toISOString()})
+      body:JSON.stringify({image, memoBefore, memoAfter, sendAt:new Date(at).toISOString()})
     });
     status.textContent = res.ok ? '予約しました' : '予約エラー';
   }catch(e){ status.textContent='予約エラー: '+e; }
