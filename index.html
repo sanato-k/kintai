@@ -133,7 +133,7 @@
   .pb-title{ font-size:20px; font-weight:800; }
   .pb-controls{ display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
   .pb-controls select{ flex:1; border:1px solid var(--line); border-radius:10px; padding:10px; font-size:15px; background:var(--card); color:var(--text); }
-  .pb-controls #pb-cat{ flex:0 0 100px; min-width:0; }
+  .pb-controls #pb-cat{ flex:0 0 84px; min-width:0; }
   .pb-controls #pb-name{ flex:0 0 100px; min-width:0; }
   .pb-controls #pb-month{ flex:0 0 calc(9ch + 40px); min-width:0; text-align:left; }
   .pb-table{ width:100%; border-collapse:collapse; font-size:14px; table-layout:fixed; }
@@ -1267,8 +1267,11 @@ function renderPersonal(){
   const myLogs=logs().filter(x=>x.name===name && x.date && x.date.startsWith(ym));
   const byDate={};
   myLogs.forEach(x=>{ (byDate[x.date]=byDate[x.date]||[]).push(x); });
-  const isKyuyo=empCat(name)==='kyuyo';
-  const kRate=isKyuyo?(ratesOf('kyuyo')[name]||{}):null;
+  const empCatVal=empCat(name);
+  const isKyuyo=empCatVal==='kyuyo';
+  const isOther=empCatVal==='other';
+  const hasAmt=isKyuyo||isOther;
+  const kRate=isKyuyo?(ratesOf('kyuyo')[name]||{}):(isOther?(ratesOf('other')[name]||{}):null);
 
   let rows='', shukin=0, hayade=0, zangyou=0;
   const linePreviewRows=[];
