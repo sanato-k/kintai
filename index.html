@@ -119,8 +119,8 @@
   .roster-table th{ background:var(--accent); color:#fff; padding:7px 8px; text-align:center; border:1px solid rgba(255,255,255,.35); }
   .roster-table td{ padding:6px 8px; text-align:center; border:1px solid var(--line); background:var(--card); }
   .roster-table td:nth-child(1){ text-align:left; }
-  .roster-table th:nth-child(1), .roster-table td:nth-child(1){ position:sticky; left:0; width:70px; z-index:2; }
-  .roster-table th:nth-child(2), .roster-table td:nth-child(2){ position:sticky; left:70px; width:36px; z-index:2; }
+  .roster-table th:nth-child(1), .roster-table td:nth-child(1){ position:sticky; left:0; width:70px; box-sizing:border-box; z-index:2; }
+  .roster-table th:nth-child(2), .roster-table td:nth-child(2){ position:sticky; left:70px; width:36px; box-sizing:border-box; z-index:2; }
   .roster-table th:nth-child(1), .roster-table th:nth-child(2){ z-index:3; }
   .roster-table tr.saturday td{ background:#eaf2ff; }
   .roster-table tr.sunday td{ background:#ffeef0; }
