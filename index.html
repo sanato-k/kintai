@@ -1298,18 +1298,20 @@ function renderPersonal(){
       if(hasIn) baseAmt += (Number(isWknd?kRate.doniti:kRate.heijitsu)||0) * frac;
       if(eRec) otAmt += (parseFloat(eRec.hours)||0) * (Number(kRate.hayade)||0);
       if(oRec) otAmt += (parseFloat(oRec.hours)||0) * (Number(kRate.hayade)||0);
+    }else if(isOther && hasIn){
+      baseAmt += (Number(kRate.nikkyu)||0) * frac;
     }
     // 時間外・合計の手動上書きを反映（base+ot=totalが常に成り立つよう調整）
     const ovr=load(AMT_OVERRIDE_KEY,{})[amtOverrideKey(name,date)]||{};
     const effOt = ovr.ot!=null ? ovr.ot : otAmt;
     const effTotal = ovr.total!=null ? ovr.total : (baseAmt+effOt);
     const effBase = effTotal - effOt;
-    if(isKyuyo && (hasIn||eRec||oRec||ovr.ot!=null||ovr.total!=null)){
+    if(hasAmt && (hasIn||eRec||oRec||ovr.ot!=null||ovr.total!=null)){
       baseTxt = fmtNum(effBase);
       otTxt = effOt ? fmtNum(effOt) : '';
       totalTxt = fmtNum(effTotal);
     }
-    if(isKyuyo) linePreviewRows.push({label:`${m}/${d}(${wdStr})`, mark:lineMark, base:effBase, ot:effOt, isWknd, isSat:wd===6, isSunHol:(wd===0||isHol)});
+    if(hasAmt) linePreviewRows.push({label:`${m}/${d}(${wdStr})`, mark:lineMark, base:effBase, ot:effOt, isWknd, isSat:wd===6, isSunHol:(wd===0||isHol)});
     rows+=`<tr class="${dayCls} ${date===pbSelDate?'sel':''}" onclick="pbSelectDay('${date}')">
       <td>${m}/${d}</td>
       <td>${wdStr}</td>
@@ -1336,7 +1338,7 @@ function renderPersonal(){
       <div class="pb-sum-row"><span>残業</span><span>${zangyou}h</span></div>
     `;
   }
-  renderLinePanel(name, m, isKyuyo, linePreviewRows);
+  renderLinePanel(name, m, hasAmt, linePreviewRows);
 }
 
 // ── LINE送信プレビュー ──
