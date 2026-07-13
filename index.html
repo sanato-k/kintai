@@ -115,12 +115,13 @@
   /* ── 出勤者一覧ページ ── */
   #page-roster{ display:none; padding:14px 14px 96px; }
   #page-roster.active{ display:block; }
-  .roster-table{ border-collapse:collapse; font-size:14px; white-space:nowrap; }
-  .roster-table th{ background:var(--accent); color:#fff; padding:7px 8px; text-align:center; border:1px solid rgba(255,255,255,.35); }
-  .roster-table td{ padding:6px 8px; text-align:center; border:1px solid var(--line); background:var(--card); }
+  .roster-table{ border-collapse:collapse; font-size:14px; white-space:nowrap; table-layout:fixed; }
+  .roster-table th{ background:var(--accent); color:#fff; padding:7px 4px; text-align:center; border:1px solid rgba(255,255,255,.35); box-sizing:border-box; overflow:hidden; text-overflow:ellipsis; }
+  .roster-table td{ padding:6px 4px; text-align:center; border:1px solid var(--line); background:var(--card); box-sizing:border-box; overflow:hidden; text-overflow:ellipsis; }
   .roster-table td:nth-child(1){ text-align:left; }
-  .roster-table th:nth-child(1), .roster-table td:nth-child(1){ position:sticky; left:0; width:70px; box-sizing:border-box; z-index:2; }
-  .roster-table th:nth-child(2), .roster-table td:nth-child(2){ position:sticky; left:70px; width:36px; box-sizing:border-box; z-index:2; }
+  .roster-table td:last-child{ text-align:left; white-space:normal; overflow:visible; text-overflow:clip; }
+  .roster-table th:nth-child(1), .roster-table td:nth-child(1){ position:sticky; left:0; z-index:2; }
+  .roster-table th:nth-child(2), .roster-table td:nth-child(2){ position:sticky; left:70px; z-index:2; }
   .roster-table th:nth-child(1), .roster-table th:nth-child(2){ z-index:3; }
   .roster-table tr.saturday td{ background:#eaf2ff; }
   .roster-table tr.sunday td{ background:#ffeef0; }
@@ -336,6 +337,7 @@
     </div>
     <div style="overflow-x:auto;">
     <table class="roster-table" id="roster-table">
+      <colgroup id="rs-colgroup"></colgroup>
       <thead id="rs-thead"></thead>
       <tbody id="rs-body"></tbody>
     </table>
@@ -868,6 +870,11 @@ function renderRoster(){
   const workedNames=new Set(allLogs.map(x=>x.name));
   const names=rosterOrderedNames(emps().filter(n=>workedNames.has(n)));
   const memoAll=load(MK,{});
+
+  document.getElementById('rs-colgroup').innerHTML =
+    `<col style="width:70px"><col style="width:36px">` +
+    names.map(()=>`<col style="width:90px">`).join('') +
+    `<col style="width:52px"><col>`;
 
   document.getElementById('rs-thead').innerHTML = `<tr>
     <th>日付</th><th>曜</th>
