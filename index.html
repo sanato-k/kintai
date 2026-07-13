@@ -243,16 +243,15 @@
      <div style="flex:0 0 60%; min-width:0;">
       <table class="pb-table" id="pb-daily-table">
         <colgroup id="pb-colgroup">
-          <col class="pb-col-date"><col class="pb-col-wd"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-amt"><col class="pb-col-amt"><col class="pb-col-amt">
+          <col class="pb-col-date"><col class="pb-col-wd"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-amt"><col class="pb-col-amt"><col class="pb-col-amt">
         </colgroup>
-        <thead id="pb-thead"><tr><th>日付</th><th>曜</th><th>出勤</th><th>早退</th><th>早出</th><th>残業</th><th>出勤金額</th><th>時間外</th><th>合計</th></tr></thead>
+        <thead id="pb-thead"><tr><th>日付</th><th>曜</th><th>出勤</th><th>早出</th><th>残業</th><th>出勤金額</th><th>時間外</th><th>合計</th></tr></thead>
         <tbody id="pb-body"></tbody>
       </table>
       <div class="pb-input" id="pb-input">
         <div class="pi-date" id="pi-date"></div>
         <div class="pi-btns">
-          <button class="pi-in" id="pi-btn-in" onclick="pbToggle('出勤')">出勤</button>
-          <button class="pi-out" id="pi-btn-out" onclick="pbToggle('早退')">早退</button>
+          <button class="pi-in" id="pi-btn-in" onclick="pbCycleAttendPanel()">出勤</button>
           <button class="pi-e" id="pi-btn-e" onclick="pbHours('早出')">早出</button>
           <button class="pi-o" id="pi-btn-o" onclick="pbHours('残業')">残業</button>
           <button class="pi-clear" onclick="pbClearDay()">この日を全部消す</button>
@@ -1182,9 +1181,9 @@ function showPersonal(){
 }
 function pbResetTableHeaders(){
   document.getElementById('pb-colgroup').innerHTML =
-    `<col class="pb-col-date"><col class="pb-col-wd"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-amt"><col class="pb-col-amt"><col class="pb-col-amt">`;
+    `<col class="pb-col-date"><col class="pb-col-wd"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-amt"><col class="pb-col-amt"><col class="pb-col-amt">`;
   document.getElementById('pb-thead').innerHTML =
-    `<tr><th>日付</th><th>曜</th><th>出勤</th><th>早退</th><th>早出</th><th>残業</th><th>出勤金額</th><th>時間外</th><th>合計</th></tr>`;
+    `<tr><th>日付</th><th>曜</th><th>出勤</th><th>早出</th><th>残業</th><th>出勤金額</th><th>時間外</th><th>合計</th></tr>`;
 }
 function renderPersonalAll(cat, ym){
   const [y,mo]=ym.split('-').map(Number);
@@ -1248,7 +1247,7 @@ function renderPersonal(){
   const isKyuyo=empCat(name)==='kyuyo';
   const kRate=isKyuyo?(ratesOf('kyuyo')[name]||{}):null;
 
-  let rows='', shukin=0, soutai=0, hayade=0, zangyou=0;
+  let rows='', shukin=0, hayade=0, zangyou=0;
   const linePreviewRows=[];
   for(let d=1;d<=days;d++){
     const date=`${ym}-${String(d).padStart(2,'0')}`;
@@ -1257,31 +1256,30 @@ function renderPersonal(){
     const isHol=isHoliday(date);
     const dayCls = isHol ? 'holiday' : (wd===6 ? 'saturday' : (wd===0 ? 'sunday' : ''));
     const recs=byDate[date]||[];
-    const hasIn=recs.some(r=>r.type==='出勤');
-    const hasOut=recs.some(r=>r.type==='早退');
+    const inRec=recs.find(r=>r.type==='出勤');
+    const hasIn=!!inRec;
+    const frac = inRec ? (inRec.hours==='1/2'?0.5 : inRec.hours==='1/3'?(1/3) : 1) : 0;
+    const inMark = inRec ? (inRec.hours==='1/2'?'1/2' : inRec.hours==='1/3'?'1/3' : '○') : '';
     const eRec=recs.find(r=>r.type==='早出');
     const oRec=recs.find(r=>r.type==='残業');
     if(hasIn) shukin++;
-    if(hasOut) soutai++;
     if(eRec) hayade+=parseFloat(eRec.hours)||0;
     if(oRec) zangyou+=parseFloat(oRec.hours)||0;
     let baseTxt='', otTxt='', totalTxt='', baseAmt=0, otAmt=0;
     const isWknd = isHol || wd===6 || wd===0;
-    if(isKyuyo && (hasIn||hasOut||eRec||oRec)){
-      if(hasIn) baseAmt += Number((isWknd?kRate.doniti:kRate.heijitsu))||0;
-      if(hasOut) baseAmt *= 0.5;
+    if(isKyuyo && (hasIn||eRec||oRec)){
+      if(hasIn) baseAmt += (Number(isWknd?kRate.doniti:kRate.heijitsu)||0) * frac;
       if(eRec) otAmt += (parseFloat(eRec.hours)||0) * (Number(kRate.hayade)||0);
       if(oRec) otAmt += (parseFloat(oRec.hours)||0) * (Number(kRate.hayade)||0);
       baseTxt = fmtNum(baseAmt);
       otTxt = otAmt ? fmtNum(otAmt) : '';
       totalTxt = fmtNum(baseAmt+otAmt);
     }
-    if(isKyuyo) linePreviewRows.push({label:`${m}/${d}(${wdStr})`, mark:hasIn?(hasOut?'◐':'○'):'', base:baseAmt, ot:otAmt, isWknd, isSat:wd===6, isSunHol:(wd===0||isHol)});
+    if(isKyuyo) linePreviewRows.push({label:`${m}/${d}(${wdStr})`, mark:inMark, base:baseAmt, ot:otAmt, isWknd, isSat:wd===6, isSunHol:(wd===0||isHol)});
     rows+=`<tr class="${dayCls} ${date===pbSelDate?'sel':''}" onclick="pbSelectDay('${date}')">
       <td>${m}/${d}</td>
       <td>${wdStr}</td>
-      <td class="tag-in" style="cursor:pointer;" onclick="pbCellToggle(event,'${date}','出勤')">${hasIn?(hasOut?'◐':'○'):''}</td>
-      <td class="tag-out" style="cursor:pointer;" onclick="pbCellToggle(event,'${date}','早退')">${hasOut?'早退':''}</td>
+      <td class="tag-in" style="cursor:pointer;" onclick="pbCellCycleAttend(event,'${date}')">${inMark}</td>
       <td class="tag-e" style="cursor:pointer;" onclick="pbCellHours(event,'${date}','早出')">${eRec?(eRec.hours+'h'):''}</td>
       <td class="tag-o" style="cursor:pointer;" onclick="pbCellHours(event,'${date}','残業')">${oRec?(oRec.hours+'h'):''}</td>
       <td class="tag-amt">${baseTxt}</td>
@@ -1301,7 +1299,6 @@ function renderPersonal(){
     document.getElementById('pb-summary').innerHTML=`
       <h3>${name} — ${m}月 集計</h3>
       <div class="pb-sum-row"><span>出勤日数</span><span>${shukin}日</span></div>
-      <div class="pb-sum-row"><span>早退</span><span>${soutai}回</span></div>
       <div class="pb-sum-row"><span>早出</span><span>${hayade}h</span></div>
       <div class="pb-sum-row"><span>残業</span><span>${zangyou}h</span></div>
     `;
@@ -1434,10 +1431,10 @@ function pbRefreshInput(){
   const wd='日月火水木金土'[new Date(pbSelDate+'T00:00').getDay()];
   document.getElementById('pi-date').textContent=`${m}/${d}（${wd}）に入力`;
   const recs=pbRecs();
-  const hasIn=recs.some(r=>r.type==='出勤'), hasOut=recs.some(r=>r.type==='早退');
+  const inRec=recs.find(r=>r.type==='出勤');
   const eRec=recs.find(r=>r.type==='早出'), oRec=recs.find(r=>r.type==='残業');
-  document.getElementById('pi-btn-in').textContent = hasIn?'出勤 ✓':'出勤';
-  document.getElementById('pi-btn-out').textContent = hasOut?'早退 ✓':'早退';
+  const inLabel = inRec ? (inRec.hours==='1/2'?'出勤 1/2':inRec.hours==='1/3'?'出勤 1/3':'出勤 ✓') : '出勤';
+  document.getElementById('pi-btn-in').textContent = inLabel;
   document.getElementById('pi-btn-e').textContent = eRec?`早出 ${eRec.hours}h`:'早出';
   document.getElementById('pi-btn-o').textContent = oRec?`残業 ${oRec.hours}h`:'残業';
 }
@@ -1459,13 +1456,17 @@ function pbToggle(type){
   const exists=recs.some(r=>r.type===type);
   if(exists){
     const name=document.getElementById('pb-name').value;
-    const removeTypes = type==='出勤' ? ['出勤','早退'] : [type];
-    set(LK, logs().filter(x=>!(x.date===pbSelDate && x.name===name && removeTypes.includes(x.type))));
+    set(LK, logs().filter(x=>!(x.date===pbSelDate && x.name===name && x.type===type)));
     clearSent(pbSelDate);
     renderPersonal();
   }else{
     pbPunch(type);
   }
+}
+function pbCycleAttendPanel(){
+  const name=document.getElementById('pb-name').value;
+  if(!name||!pbSelDate) return;
+  pbCycleAttend(name,pbSelDate);
 }
 function pbHours(type){
   const recs=pbRecs();
@@ -1495,13 +1496,33 @@ function pbCellToggle(ev,date,type){
   if(!name) return;
   const exists=logs().some(x=>x.name===name && x.date===date && x.type===type);
   if(exists){
-    const removeTypes = type==='出勤' ? ['出勤','早退'] : [type];
-    set(LK, logs().filter(x=>!(x.date===date && x.name===name && removeTypes.includes(x.type))));
+    set(LK, logs().filter(x=>!(x.date===date && x.name===name && x.type===type)));
     clearSent(date);
     renderPersonal();
   }else{
     pbCellPunch(date,type);
   }
+}
+// 出勤を 未入力→○(全)→1/2→1/3→未入力 の順でサイクルする
+function pbCycleAttend(name,date){
+  const cur=logs().find(x=>x.name===name && x.date===date && x.type==='出勤');
+  const states=[null,'1','1/2','1/3'];
+  const curIdx = cur ? states.indexOf(cur.hours||'1') : 0;
+  const next = states[(curIdx+1) % states.length];
+  if(next===null){
+    set(LK, logs().filter(x=>!(x.name===name && x.date===date && x.type==='出勤')));
+    clearSent(date);
+  }else{
+    pbCellPunch(date,'出勤',next);
+    return;
+  }
+  renderPersonal();
+}
+function pbCellCycleAttend(ev,date){
+  ev.stopPropagation();
+  const name=document.getElementById('pb-name').value;
+  if(!name) return;
+  pbCycleAttend(name,date);
 }
 function pbCellHours(ev,date,type){
   ev.stopPropagation();
