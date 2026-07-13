@@ -1503,14 +1503,27 @@ function pbCellToggle(ev,date,type){
 }
 function pbCellHours(ev,date,type){
   ev.stopPropagation();
+  const td=ev.currentTarget;
   const name=document.getElementById('pb-name').value;
   if(!name) return;
   const rec=logs().find(x=>x.name===name && x.date===date && x.type===type);
-  uiPrompt(`${type}時間（h）`, rec?rec.hours:"1", (h)=>{
-    const v=parseFloat(h);
-    if(isNaN(v)||v<=0){ uiAlert("数値を入れてください"); return; }
-    pbCellPunch(date,type,v);
-  }, true);
+  td.innerHTML=`<input type="text" inputmode="decimal" value="${rec?rec.hours:''}" style="width:100%; box-sizing:border-box; text-align:center; font-size:14px;"
+    onclick="event.stopPropagation()"
+    onkeydown="if(event.key==='Enter'){event.preventDefault();pbCellHoursSave('${date}','${type}',this.value);}">`;
+  const inp=td.querySelector('input');
+  inp.focus();
+  inp.select();
+}
+function pbCellHoursSave(date,type,value){
+  const name=document.getElementById('pb-name').value;
+  const v=parseFloat(value);
+  if(!value || isNaN(v) || v<=0){
+    set(LK, logs().filter(x=>!(x.name===name && x.date===date && x.type===type)));
+    clearSent(date);
+    renderPersonal();
+    return;
+  }
+  pbCellPunch(date,type,v);
 }
 function pbClearDay(){
   const name=document.getElementById('pb-name').value;
