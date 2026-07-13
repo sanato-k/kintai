@@ -260,18 +260,18 @@
       <div class="pb-summary" id="pb-summary"></div>
      </div>
      <div id="pb-line-panel" style="flex:1; min-width:0; background:var(--card); border-radius:12px; padding:20px;">
-       <div id="pb-line-content">
+       <div id="pb-line-content" style="background:#fff; padding:14px; border-radius:10px;">
          <table id="pb-line-table" style="width:100%; border-collapse:collapse; font-size:16px;">
            <colgroup><col style="width:32%;"><col style="width:18%;"><col></colgroup>
            <thead><tr>
-             <th style="text-align:left; padding:6px 4px; border-bottom:2px solid var(--accent); border-right:1px solid var(--line);">日付</th>
-             <th style="text-align:left; padding:6px 4px; border-bottom:2px solid var(--accent); border-right:1px solid var(--line);">出勤</th>
-             <th style="text-align:right; padding:6px 4px; border-bottom:2px solid var(--accent);">給与</th>
+             <th style="text-align:left; padding:7px 4px; background:var(--accent); color:#fff; border-right:1px solid rgba(255,255,255,.35);">日付</th>
+             <th style="text-align:left; padding:7px 4px; background:var(--accent); color:#fff; border-right:1px solid rgba(255,255,255,.35);">出勤</th>
+             <th style="text-align:right; padding:7px 4px; background:var(--accent); color:#fff;">給与</th>
            </tr></thead>
            <tbody id="pb-line-body"></tbody>
          </table>
+         <table id="pb-line-breakdown" style="width:100%; border-collapse:collapse; font-size:16px; margin-top:14px;"></table>
        </div>
-       <table id="pb-line-breakdown" style="width:100%; border-collapse:collapse; font-size:16px; margin-top:12px;"></table>
        <div style="margin-top:16px;">
          <label style="font-size:14px; color:var(--muted);">送信前メモ</label>
          <textarea id="pb-line-memo-before" rows="3" style="width:100%; box-sizing:border-box; font-size:15px;" placeholder="例：今月もありがとうございます"></textarea>
@@ -1261,15 +1261,18 @@ function renderLinePanel(name, m, isKyuyo, rows){
   box.style.display='';
   const attended=rows.filter(r=>r.mark==='○');
   let baseSum=0, otSum=0;
-  let body=rows.map(r=>`<tr style="border-bottom:1px solid var(--line);">
-    <td style="padding:5px 4px; border-right:1px solid var(--line);">${r.label}</td>
-    <td style="text-align:left; padding:5px 4px; border-right:1px solid var(--line);">${r.mark}</td>
-    <td style="text-align:right; padding:5px 4px;">${r.mark?fmtNum(r.base+r.ot):''}</td>
-  </tr>`).join('');
+  let body=rows.map(r=>{
+    const bg = r.mark ? (r.isWknd?'#fde9d9':'#eafaf1') : (r.isWknd?'#fdf3ea':'#ffffff');
+    return `<tr style="border-bottom:1px solid var(--line); background:${bg};">
+    <td style="padding:5px 4px; border-right:1px solid var(--line); ${r.isWknd?'color:#c2410c; font-weight:700;':''}">${r.label}</td>
+    <td style="text-align:left; padding:5px 4px; border-right:1px solid var(--line); ${r.mark?'color:#15803d; font-weight:800;':''}">${r.mark}</td>
+    <td style="text-align:right; padding:5px 4px; ${r.mark?'color:#15803d; font-weight:700;':''}">${r.mark?fmtNum(r.base+r.ot):''}</td>
+  </tr>`;
+  }).join('');
   attended.forEach(r=>{ baseSum+=r.base; otSum+=r.ot; });
-  body+=`<tr style="font-weight:800; border-top:2px solid var(--accent);">
-    <td style="padding:5px 4px; border-right:1px solid var(--line);">合計(${attended.length}日)</td><td style="border-right:1px solid var(--line);"></td>
-    <td style="text-align:right; padding:5px 4px;">${fmtNum(baseSum+otSum)}</td>
+  body+=`<tr style="font-weight:800; background:var(--accent); color:#fff;">
+    <td style="padding:6px 4px; border-right:1px solid rgba(255,255,255,.35);">合計(${attended.length}日)</td><td style="border-right:1px solid rgba(255,255,255,.35);"></td>
+    <td style="text-align:right; padding:6px 4px;">${fmtNum(baseSum+otSum)}</td>
   </tr>`;
   document.getElementById('pb-line-body').innerHTML=body;
 
@@ -1279,16 +1282,19 @@ function renderLinePanel(name, m, isKyuyo, rows){
     const map = r.isWknd ? weekendMap : weekdayMap;
     map[r.base] = (map[r.base]||0) + 1;
   });
-  const bdCellStyle='padding:5px 4px; border-right:1px solid var(--line);';
-  let bdRows='';
-  [weekendMap, weekdayMap].forEach(map=>{
+  const bdCellStyle='padding:6px 4px; border-right:1px solid var(--line);';
+  let bdRows='', bdIdx=0;
+  [weekendMap, weekdayMap].forEach((map,mi)=>{
     Object.keys(map).map(Number).sort((a,b)=>b-a).forEach(unit=>{
       const days=map[unit];
-      bdRows+=`<tr style="border-bottom:1px solid var(--line);"><td style="${bdCellStyle}">${fmtNum(unit)}</td><td style="text-align:right; ${bdCellStyle}">${days}日</td><td style="text-align:right; padding:5px 4px;">${fmtNum(unit*days)}円</td></tr>`;
+      const bg = bdIdx%2===0 ? '#f7f8fc' : '#ffffff';
+      const tint = mi===0 ? 'color:#c2410c;' : '';
+      bdRows+=`<tr style="border-bottom:1px solid var(--line); background:${bg};"><td style="${bdCellStyle} ${tint}">${fmtNum(unit)}</td><td style="text-align:right; ${bdCellStyle}">${days}日</td><td style="text-align:right; padding:6px 4px;">${fmtNum(unit*days)}円</td></tr>`;
+      bdIdx++;
     });
   });
-  if(otSum) bdRows+=`<tr style="border-bottom:1px solid var(--line);"><td style="${bdCellStyle}">時間外</td><td style="${bdCellStyle}"></td><td style="text-align:right; padding:5px 4px;">${fmtNum(otSum)}円</td></tr>`;
-  let bdHtml=`<tr style="font-weight:800; border-bottom:1px solid var(--line);"><td style="${bdCellStyle}">合計</td><td style="text-align:right; ${bdCellStyle}">${attended.length}日</td><td style="text-align:right; padding:5px 4px;">${fmtNum(baseSum+otSum)}円</td></tr>`;
+  if(otSum) bdRows+=`<tr style="border-bottom:1px solid var(--line); background:#fff7ed;"><td style="${bdCellStyle} color:#c2410c;">時間外</td><td style="${bdCellStyle}"></td><td style="text-align:right; padding:6px 4px; color:#c2410c; font-weight:700;">${fmtNum(otSum)}円</td></tr>`;
+  let bdHtml=`<tr style="font-weight:800; background:var(--accent); color:#fff;"><td style="${bdCellStyle} border-right:1px solid rgba(255,255,255,.35);">合計</td><td style="text-align:right; ${bdCellStyle} border-right:1px solid rgba(255,255,255,.35);">${attended.length}日</td><td style="text-align:right; padding:6px 4px;">${fmtNum(baseSum+otSum)}円</td></tr>`;
   bdHtml+=bdRows;
   document.getElementById('pb-line-breakdown').innerHTML=bdHtml;
 
