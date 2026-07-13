@@ -161,17 +161,6 @@
   .pb-sum-row:last-child{ border-bottom:none; font-weight:800; }
   #pb-line-content{ border:2px solid #3b82f6; }
   .pb-table tr.sel td{ outline:2px solid var(--accent); outline-offset:-2px; }
-  .pb-input{ display:none; background:var(--card); border-radius:12px; padding:14px; margin:10px 0; }
-  .pb-input.active{ display:block; }
-  .pb-input .pi-date{ font-weight:800; font-size:16px; margin-bottom:10px; text-align:center; }
-  .pb-input .pi-btns{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-  .pb-input button{ border:none; border-radius:10px; padding:14px; font-size:15px; font-weight:800; color:#fff; }
-  .pb-input .pi-in{ background:var(--in-on); }
-  .pb-input .pi-out{ background:var(--out-on); }
-  .pb-input .pi-e{ background:var(--early-on); }
-  .pb-input .pi-o{ background:var(--over-on); }
-  .pb-input .pi-clear{ grid-column:1/3; background:#94a3b8; }
-
   /* ── 単価設定ページ ── */
   #page-rates{ display:none; padding:14px 14px 96px; }
   #page-rates.active{ display:block; }
@@ -249,15 +238,6 @@
         <thead id="pb-thead"><tr><th>日付</th><th>曜</th><th>出勤</th><th>早出</th><th>残業</th><th>出勤金額</th><th>時間外</th><th>合計</th></tr></thead>
         <tbody id="pb-body"></tbody>
       </table>
-      <div class="pb-input" id="pb-input">
-        <div class="pi-date" id="pi-date"></div>
-        <div class="pi-btns">
-          <button class="pi-in" id="pi-btn-in" onclick="pbCycleAttendPanel()">出勤</button>
-          <button class="pi-e" id="pi-btn-e" onclick="pbHours('早出')">早出</button>
-          <button class="pi-o" id="pi-btn-o" onclick="pbHours('残業')">残業</button>
-          <button class="pi-clear" onclick="pbClearDay()">この日を全部消す</button>
-        </div>
-      </div>
       <div class="pb-summary" id="pb-summary"></div>
      </div>
      <div id="pb-line-panel" style="flex:1; min-width:0; background:var(--card); border-radius:12px; padding:20px;">
@@ -461,7 +441,7 @@ const set=(k,v)=>{ localStorage.setItem(k,JSON.stringify(v)); syncPush(k,v); };
 const SYNC_URL="https://kintai-sync.manasarowaru.workers.dev";
 const SYNC_KEY="kintai2026sync";
 const SYNC_KEYS=["kinmu_emps_v1","kinmu_logs_v1","kinmu_memo_v1","kinmu_power_v1","kinmu_sent_v1",
-  "kinmu_rates_v1","kinmu_rates_senju_v1","kinmu_rates_other_v1","kinmu_empcat_v1","kinmu_roster_order_v1"];
+  "kinmu_rates_v1","kinmu_rates_senju_v1","kinmu_rates_other_v1","kinmu_empcat_v1","kinmu_roster_order_v1","kinmu_amt_override_v1"];
 function syncPush(k,v){
   if(!SYNC_KEYS.includes(k)) return;
   fetch(`${SYNC_URL}/set?k=${k}`,{
@@ -1110,6 +1090,9 @@ function lbUp(e){
 renderAllLeftBtns();
 // 個人出勤簿：区分プルダウンの選択を端末に記憶
 const PBCAT_KEY="kinmu_pbcat_v1";
+// 時間外・合計の手動上書き（キー:"氏名_日付"）
+const AMT_OVERRIDE_KEY="kinmu_amt_override_v1";
+function amtOverrideKey(name,date){ return `${name}_${date}`; }
 const PBNAME_KEY="kinmu_pbname_v1";
 const PBMONTH_KEY="kinmu_pbmonth_v1";
 // 1〜12月ボタン: 10月始まりの年度で、1〜4月は次の年として扱う(給与基準.xlsmの年度区切りと同じ)
@@ -1270,7 +1253,6 @@ function renderPersonal(){
   if(name===PB_ALL){
     document.getElementById('pb-summary').style.display='none';
     document.getElementById('pb-line-panel').style.display='none';
-    document.getElementById('pb-input').classList.remove('active');
     renderPersonalAll(cat, ym);
     return;
   }
@@ -1308,11 +1290,18 @@ function renderPersonal(){
       if(hasIn) baseAmt += (Number(isWknd?kRate.doniti:kRate.heijitsu)||0) * frac;
       if(eRec) otAmt += (parseFloat(eRec.hours)||0) * (Number(kRate.hayade)||0);
       if(oRec) otAmt += (parseFloat(oRec.hours)||0) * (Number(kRate.hayade)||0);
-      baseTxt = fmtNum(baseAmt);
-      otTxt = otAmt ? fmtNum(otAmt) : '';
-      totalTxt = fmtNum(baseAmt+otAmt);
     }
-    if(isKyuyo) linePreviewRows.push({label:`${m}/${d}(${wdStr})`, mark:lineMark, base:baseAmt, ot:otAmt, isWknd, isSat:wd===6, isSunHol:(wd===0||isHol)});
+    // 時間外・合計の手動上書きを反映（base+ot=totalが常に成り立つよう調整）
+    const ovr=load(AMT_OVERRIDE_KEY,{})[amtOverrideKey(name,date)]||{};
+    const effOt = ovr.ot!=null ? ovr.ot : otAmt;
+    const effTotal = ovr.total!=null ? ovr.total : (baseAmt+effOt);
+    const effBase = effTotal - effOt;
+    if(isKyuyo && (hasIn||eRec||oRec||ovr.ot!=null||ovr.total!=null)){
+      baseTxt = fmtNum(effBase);
+      otTxt = effOt ? fmtNum(effOt) : '';
+      totalTxt = fmtNum(effTotal);
+    }
+    if(isKyuyo) linePreviewRows.push({label:`${m}/${d}(${wdStr})`, mark:lineMark, base:effBase, ot:effOt, isWknd, isSat:wd===6, isSunHol:(wd===0||isHol)});
     rows+=`<tr class="${dayCls} ${date===pbSelDate?'sel':''}" onclick="pbSelectDay('${date}')">
       <td>${m}/${d}</td>
       <td>${wdStr}</td>
@@ -1320,12 +1309,11 @@ function renderPersonal(){
       <td class="tag-e" style="cursor:pointer;" onclick="pbCellHours(event,'${date}','早出')">${eRec?(eRec.hours+'h'):''}</td>
       <td class="tag-o" style="cursor:pointer;" onclick="pbCellHours(event,'${date}','残業')">${oRec?(oRec.hours+'h'):''}</td>
       <td class="tag-amt">${baseTxt}</td>
-      <td class="tag-amt">${otTxt}</td>
-      <td class="tag-amt">${totalTxt}</td>
+      <td class="tag-amt" style="cursor:pointer;" onclick="pbCellAmt(event,'${date}','ot')">${otTxt}</td>
+      <td class="tag-amt" style="cursor:pointer;" onclick="pbCellAmt(event,'${date}','total')">${totalTxt}</td>
     </tr>`;
   }
   document.getElementById('pb-body').innerHTML=rows;
-  pbRefreshInput();
   if(cat==='senju'){
     document.getElementById('pb-summary').innerHTML=`
       <h3>${name} — ${m}月 集計</h3>
@@ -1457,65 +1445,6 @@ function pbSelectDay(date){
   pbSelDate = (pbSelDate===date) ? null : date;
   renderPersonal();
 }
-function pbRecs(){
-  const name=document.getElementById('pb-name').value;
-  if(!pbSelDate) return [];
-  return logs().filter(x=>x.name===name && x.date===pbSelDate);
-}
-function pbRefreshInput(){
-  const box=document.getElementById('pb-input');
-  if(!pbSelDate){ box.classList.remove('active'); return; }
-  box.classList.add('active');
-  const [y,m,d]=pbSelDate.split('-').map(Number);
-  const wd='日月火水木金土'[new Date(pbSelDate+'T00:00').getDay()];
-  document.getElementById('pi-date').textContent=`${m}/${d}（${wd}）に入力`;
-  const recs=pbRecs();
-  const inRec=recs.find(r=>r.type==='出勤');
-  const eRec=recs.find(r=>r.type==='早出'), oRec=recs.find(r=>r.type==='残業');
-  const inLabel = inRec ? (inRec.hours==='1/2'?'出勤 1/2':inRec.hours==='1/3'?'出勤 1/3':'出勤 ✓') : '出勤';
-  document.getElementById('pi-btn-in').textContent = inLabel;
-  document.getElementById('pi-btn-e').textContent = eRec?`早出 ${eRec.hours}h`:'早出';
-  document.getElementById('pi-btn-o').textContent = oRec?`残業 ${oRec.hours}h`:'残業';
-}
-function pbPunch(type,hours){
-  const name=document.getElementById('pb-name').value;
-  const date=pbSelDate;
-  if(!name||!date) return;
-  const n=new Date(); const time=`${pad(n.getHours())}:${pad(n.getMinutes())}`;
-  const arr=logs();
-  const i=arr.findIndex(x=>x.date===date && x.name===name && x.type===type);
-  const rec={date,time,name,type,hours:hours||"",ts:Date.now()};
-  if(i>=0) arr[i]=rec; else arr.unshift(rec);
-  set(LK,arr);
-  clearSent(date);
-  renderPersonal();
-}
-function pbToggle(type){
-  const recs=pbRecs();
-  const exists=recs.some(r=>r.type===type);
-  if(exists){
-    const name=document.getElementById('pb-name').value;
-    set(LK, logs().filter(x=>!(x.date===pbSelDate && x.name===name && x.type===type)));
-    clearSent(pbSelDate);
-    renderPersonal();
-  }else{
-    pbPunch(type);
-  }
-}
-function pbCycleAttendPanel(){
-  const name=document.getElementById('pb-name').value;
-  if(!name||!pbSelDate) return;
-  pbCycleAttend(name,pbSelDate);
-}
-function pbHours(type){
-  const recs=pbRecs();
-  const rec=recs.find(r=>r.type===type);
-  uiPrompt(`${type}時間（h）`, rec?rec.hours:"1", (h)=>{
-    const v=parseFloat(h);
-    if(isNaN(v)||v<=0){ uiAlert("数値を入れてください"); return; }
-    pbPunch(type,v);
-  }, true);
-}
 // ── 表のセルを直接クリックして出勤/早退/早出/残業をオンオフ ──
 function pbCellPunch(date,type,hours){
   const name=document.getElementById('pb-name').value;
@@ -1587,14 +1516,30 @@ function pbCellHoursSave(date,type,value){
   }
   pbCellPunch(date,type,v);
 }
-function pbClearDay(){
+// ── 時間外・合計セルの手動上書き ──
+function pbCellAmt(ev,date,field){
+  ev.stopPropagation();
+  const td=ev.currentTarget;
   const name=document.getElementById('pb-name').value;
-  if(!name||!pbSelDate) return;
-  uiConfirm(`${pbSelDate} の${name}のデータを全部消しますか？`, ()=>{
-    set(LK, logs().filter(x=>!(x.date===pbSelDate && x.name===name)));
-    clearSent(pbSelDate);
-    renderPersonal();
-  });
+  if(!name) return;
+  const raw=td.textContent.trim();
+  td.innerHTML=`<input type="text" inputmode="decimal" value="${raw.replace(/,/g,'')}" style="width:100%; box-sizing:border-box; text-align:center; font-size:14px;"
+    onclick="event.stopPropagation()"
+    onkeydown="if(event.key==='Enter'){event.preventDefault();pbCellAmtSave('${date}','${field}',this.value);}">`;
+  const inp=td.querySelector('input');
+  inp.focus();
+  inp.select();
+}
+function pbCellAmtSave(date,field,value){
+  const name=document.getElementById('pb-name').value;
+  const all=load(AMT_OVERRIDE_KEY,{});
+  const key=amtOverrideKey(name,date);
+  const v=parseNum(value);
+  if(!all[key]) all[key]={};
+  all[key][field]=v;
+  if(all[key].ot==null && all[key].total==null) delete all[key];
+  set(AMT_OVERRIDE_KEY, all);
+  renderPersonal();
 }
 
 // ── 従業員の区分（給与賃金/専従者給与/その他） ──
