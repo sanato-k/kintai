@@ -1276,11 +1276,11 @@ function renderPersonal(){
       otTxt = otAmt ? fmtNum(otAmt) : '';
       totalTxt = fmtNum(baseAmt+otAmt);
     }
-    if(isKyuyo) linePreviewRows.push({label:`${m}/${d}(${wdStr})`, mark:hasIn?'○':'', base:baseAmt, ot:otAmt, isWknd, isSat:wd===6, isSunHol:(wd===0||isHol)});
+    if(isKyuyo) linePreviewRows.push({label:`${m}/${d}(${wdStr})`, mark:hasIn?(hasOut?'◐':'○'):'', base:baseAmt, ot:otAmt, isWknd, isSat:wd===6, isSunHol:(wd===0||isHol)});
     rows+=`<tr class="${dayCls} ${date===pbSelDate?'sel':''}" onclick="pbSelectDay('${date}')">
       <td>${m}/${d}</td>
       <td>${wdStr}</td>
-      <td class="tag-in">${hasIn?'○':''}</td>
+      <td class="tag-in">${hasIn?(hasOut?'◐':'○'):''}</td>
       <td class="tag-out">${hasOut?'早退':''}</td>
       <td class="tag-e">${eRec?(eRec.hours+'h'):''}</td>
       <td class="tag-o">${oRec?(oRec.hours+'h'):''}</td>
@@ -1320,7 +1320,7 @@ function renderLinePanel(name, m, isKyuyo, rows){
     return;
   }
   box.style.display='';
-  const attended=rows.filter(r=>r.mark==='○');
+  const attended=rows.filter(r=>r.mark);
   let baseSum=0, otSum=0;
   let body=rows.map(r=>{
     const bg = r.isSat ? '#eaf2ff' : (r.isSunHol ? '#ffeef0' : '#ffffff');
