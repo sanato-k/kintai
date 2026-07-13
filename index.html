@@ -1324,9 +1324,14 @@ function renderLinePanel(name, m, isKyuyo, rows){
   </tr>`;
   }).join('');
   attended.forEach(r=>{ baseSum+=r.base; otSum+=r.ot; });
-  body+=`<tr style="font-weight:800; background:var(--accent); color:#fff;">
-    <td style="padding:6px 4px; border-right:1px solid rgba(255,255,255,.35);">合計(${attended.length}日)</td><td style="border-right:1px solid rgba(255,255,255,.35);"></td>
+  const offCount=rows.length-attended.length;
+  body+=`<tr style="font-weight:800; background:#dbeafe; color:#000;">
+    <td style="padding:6px 4px; border-right:1px solid var(--line);">合計</td><td style="text-align:left; padding:6px 4px; border-right:1px solid var(--line);">${attended.length}日</td>
     <td style="text-align:right; padding:6px 4px;">${fmtNum(baseSum+otSum)}</td>
+  </tr>`;
+  body+=`<tr style="font-weight:800; background:#dbeafe; color:#000;">
+    <td style="padding:6px 4px; border-right:1px solid var(--line);">休みの日数</td><td style="text-align:left; padding:6px 4px; border-right:1px solid var(--line);">${offCount}日</td>
+    <td></td>
   </tr>`;
   document.getElementById('pb-line-body').innerHTML=body;
 
@@ -1347,9 +1352,8 @@ function renderLinePanel(name, m, isKyuyo, rows){
     });
   });
   if(otSum) bdRows+=`<tr style="border-bottom:1px solid var(--line);"><td style="${bdCellStyle}">時間外</td><td style="${bdCellStyle}"></td><td style="text-align:right; padding:6px 4px; color:#000;">${fmtNum(otSum)}円</td></tr>`;
-  let bdHtml=`<tr style="font-weight:800; background:var(--accent); color:#fff;"><td style="${bdCellStyle} border-right:1px solid rgba(255,255,255,.35);">合計</td><td style="text-align:right; ${bdCellStyle} border-right:1px solid rgba(255,255,255,.35);">${attended.length}日</td><td style="text-align:right; padding:6px 4px;">${fmtNum(baseSum+otSum)}円</td></tr>`;
-  bdHtml+=bdRows;
-  document.getElementById('pb-line-breakdown').innerHTML=bdHtml;
+  bdRows+=`<tr style="font-weight:800; background:#60a5fa; color:#fff;"><td style="padding:6px 4px; border-right:1px solid rgba(255,255,255,.5);">支給合計</td><td style="text-align:right; padding:6px 4px; border-right:1px solid rgba(255,255,255,.5);">${attended.length}日</td><td style="text-align:right; padding:6px 4px;">${fmtNum(baseSum+otSum)}円</td></tr>`;
+  document.getElementById('pb-line-breakdown').innerHTML=bdRows;
 
   const afterAll=load(LINE_MEMO_AFTER_KEY,{});
   document.getElementById('pb-line-memo-after').value = afterAll[pbLineMemoKey(name,ym)] || '';
