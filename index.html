@@ -119,7 +119,7 @@
   .roster-table th{ background:var(--accent); color:#fff; padding:7px 4px; text-align:center; border:1px solid rgba(255,255,255,.35); box-sizing:border-box; overflow:hidden; text-overflow:ellipsis; }
   .roster-table td{ padding:6px 4px; text-align:center; border:1px solid var(--line); background:var(--card); box-sizing:border-box; overflow:hidden; text-overflow:ellipsis; }
   .roster-table td:nth-child(1){ text-align:left; }
-  .roster-table td:last-child{ text-align:left; white-space:normal; overflow:visible; text-overflow:clip; }
+  .roster-table td:last-child{ text-align:left; white-space:normal; overflow-wrap:break-word; overflow:hidden; text-overflow:clip; }
   .roster-table th:nth-child(1), .roster-table td:nth-child(1){ position:sticky; left:0; z-index:2; }
   .roster-table th:nth-child(2), .roster-table td:nth-child(2){ position:sticky; left:70px; z-index:2; }
   .roster-table th:nth-child(1), .roster-table th:nth-child(2){ z-index:3; }
@@ -874,7 +874,7 @@ function renderRoster(){
   document.getElementById('rs-colgroup').innerHTML =
     `<col style="width:70px"><col style="width:36px">` +
     names.map(()=>`<col style="width:90px">`).join('') +
-    `<col style="width:52px"><col>`;
+    `<col style="width:52px"><col style="width:280px">`;
 
   document.getElementById('rs-thead').innerHTML = `<tr>
     <th>日付</th><th>曜</th>
