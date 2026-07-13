@@ -1269,7 +1269,7 @@ function renderPersonal(){
       otTxt = otAmt ? fmtNum(otAmt) : '';
       totalTxt = fmtNum(baseAmt+otAmt);
     }
-    if(isKyuyo) linePreviewRows.push({label:`${m}/${d}(${wdStr})`, mark:hasIn?'○':'', base:baseAmt, ot:otAmt, isWknd});
+    if(isKyuyo) linePreviewRows.push({label:`${m}/${d}(${wdStr})`, mark:hasIn?'○':'', base:baseAmt, ot:otAmt, isWknd, isSat:wd===6, isSunHol:(wd===0||isHol)});
     rows+=`<tr class="${dayCls} ${date===pbSelDate?'sel':''}" onclick="pbSelectDay('${date}')">
       <td>${m}/${d}</td>
       <td>${wdStr}</td>
@@ -1316,11 +1316,11 @@ function renderLinePanel(name, m, isKyuyo, rows){
   const attended=rows.filter(r=>r.mark==='○');
   let baseSum=0, otSum=0;
   let body=rows.map(r=>{
-    const bg = r.mark ? (r.isWknd?'#fde9d9':'#eafaf1') : (r.isWknd?'#fdf3ea':'#ffffff');
+    const bg = r.isSat ? '#eaf2ff' : (r.isSunHol ? '#ffeef0' : '#ffffff');
     return `<tr style="border-bottom:1px solid var(--line); background:${bg};">
-    <td style="padding:5px 4px; border-right:1px solid var(--line); ${r.isWknd?'color:#c2410c; font-weight:700;':''}">${r.label}</td>
-    <td style="text-align:left; padding:5px 4px; border-right:1px solid var(--line); ${r.mark?'color:#15803d; font-weight:800;':''}">${r.mark}</td>
-    <td style="text-align:right; padding:5px 4px; ${r.mark?'color:#15803d; font-weight:700;':''}">${r.mark?fmtNum(r.base+r.ot):''}</td>
+    <td style="padding:5px 4px; border-right:1px solid var(--line); color:#000;">${r.label}</td>
+    <td style="text-align:left; padding:5px 4px; border-right:1px solid var(--line); color:#000;">${r.mark}</td>
+    <td style="text-align:right; padding:5px 4px; color:#000;">${r.mark?fmtNum(r.base+r.ot):''}</td>
   </tr>`;
   }).join('');
   attended.forEach(r=>{ baseSum+=r.base; otSum+=r.ot; });
@@ -1336,18 +1336,17 @@ function renderLinePanel(name, m, isKyuyo, rows){
     const map = r.isWknd ? weekendMap : weekdayMap;
     map[r.base] = (map[r.base]||0) + 1;
   });
-  const bdCellStyle='padding:6px 4px; border-right:1px solid var(--line);';
+  const bdCellStyle='padding:6px 4px; border-right:1px solid var(--line); color:#000;';
   let bdRows='', bdIdx=0;
-  [weekendMap, weekdayMap].forEach((map,mi)=>{
+  [weekendMap, weekdayMap].forEach((map)=>{
     Object.keys(map).map(Number).sort((a,b)=>b-a).forEach(unit=>{
       const days=map[unit];
       const bg = bdIdx%2===0 ? '#f7f8fc' : '#ffffff';
-      const tint = mi===0 ? 'color:#c2410c;' : '';
-      bdRows+=`<tr style="border-bottom:1px solid var(--line); background:${bg};"><td style="${bdCellStyle} ${tint}">${fmtNum(unit)}</td><td style="text-align:right; ${bdCellStyle}">${days}日</td><td style="text-align:right; padding:6px 4px;">${fmtNum(unit*days)}円</td></tr>`;
+      bdRows+=`<tr style="border-bottom:1px solid var(--line); background:${bg};"><td style="${bdCellStyle}">${fmtNum(unit)}</td><td style="text-align:right; ${bdCellStyle}">${days}日</td><td style="text-align:right; padding:6px 4px; color:#000;">${fmtNum(unit*days)}円</td></tr>`;
       bdIdx++;
     });
   });
-  if(otSum) bdRows+=`<tr style="border-bottom:1px solid var(--line); background:#fff7ed;"><td style="${bdCellStyle} color:#c2410c;">時間外</td><td style="${bdCellStyle}"></td><td style="text-align:right; padding:6px 4px; color:#c2410c; font-weight:700;">${fmtNum(otSum)}円</td></tr>`;
+  if(otSum) bdRows+=`<tr style="border-bottom:1px solid var(--line);"><td style="${bdCellStyle}">時間外</td><td style="${bdCellStyle}"></td><td style="text-align:right; padding:6px 4px; color:#000;">${fmtNum(otSum)}円</td></tr>`;
   let bdHtml=`<tr style="font-weight:800; background:var(--accent); color:#fff;"><td style="${bdCellStyle} border-right:1px solid rgba(255,255,255,.35);">合計</td><td style="text-align:right; ${bdCellStyle} border-right:1px solid rgba(255,255,255,.35);">${attended.length}日</td><td style="text-align:right; padding:6px 4px;">${fmtNum(baseSum+otSum)}円</td></tr>`;
   bdHtml+=bdRows;
   document.getElementById('pb-line-breakdown').innerHTML=bdHtml;
