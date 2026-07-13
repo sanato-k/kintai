@@ -236,8 +236,9 @@
         <option value="other">その他</option>
       </select>
       <select id="pb-name" onchange="pbSelDate=null;set(PBNAME_KEY,this.value);renderPersonal()"></select>
-      <select id="pb-month" onchange="pbSelDate=null;set(PBMONTH_KEY,this.value);renderPersonal()"></select>
+      <select id="pb-month" style="display:none;" onchange="pbSelDate=null;set(PBMONTH_KEY,this.value);renderPersonal()"></select>
     </div>
+    <div id="pb-month-btns" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;"></div>
 
     <div style="display:flex; gap:12px; align-items:flex-start;">
      <div style="flex:0 0 60%; min-width:0;">
@@ -1111,6 +1112,31 @@ renderAllLeftBtns();
 const PBCAT_KEY="kinmu_pbcat_v1";
 const PBNAME_KEY="kinmu_pbname_v1";
 const PBMONTH_KEY="kinmu_pbmonth_v1";
+// 1〜12月ボタン: 10月始まりの年度で、1〜4月は次の年として扱う(給与基準.xlsmの年度区切りと同じ)
+function pbMonthFiscalYm(monthNum){
+  const t=today();
+  const ty=Number(t.slice(0,4)), tm=Number(t.slice(5,7));
+  const baseYear = tm>=5 ? ty : ty-1;
+  const y = monthNum<=4 ? baseYear+1 : baseYear;
+  return `${y}-${String(monthNum).padStart(2,'0')}`;
+}
+function pbSelectMonth(ym){
+  pbSelDate=null;
+  document.getElementById('pb-month').value=ym;
+  set(PBMONTH_KEY,ym);
+  renderPersonal();
+  renderPbMonthButtons();
+}
+function renderPbMonthButtons(){
+  const cur=document.getElementById('pb-month').value;
+  const box=document.getElementById('pb-month-btns');
+  if(!box) return;
+  box.innerHTML=Array.from({length:12},(_,i)=>i+1).map(mo=>{
+    const ym=pbMonthFiscalYm(mo);
+    const on = ym===cur;
+    return `<button style="flex:1 0 60px; ${on?'background:var(--accent) !important; color:#fff !important;':''}" onclick="pbSelectMonth('${ym}')">${mo}月</button>`;
+  }).join('');
+}
 // 単価区分に応じて氏名プルダウンを絞り込んで構築
 const PB_ALL='__ALL__';
 function pbBuildNameOptions(preferName){
@@ -1136,8 +1162,11 @@ function showPersonalFor(i){
   const months=new Set();
   months.add(today().slice(0,7));
   logs().forEach(x=>{ if(x.date) months.add(x.date.slice(0,7)); });
+  const storedM=load(PBMONTH_KEY,'');
+  if(storedM) months.add(storedM);
   const msel=document.getElementById('pb-month');
   msel.innerHTML=[...months].sort().reverse().map(m=>`<option value="${m}">${m.replace('-','年')}月</option>`).join('');
+  if(storedM) msel.value=storedM;
   // 区分プルダウンをその従業員の区分に合わせ、氏名を絞り込んで選択
   document.getElementById('pb-cat').value=empCat(name);
   set(PBCAT_KEY, empCat(name));
@@ -1149,6 +1178,7 @@ function showPersonalFor(i){
   document.getElementById('page-personal').classList.add('active');
   syncPageNavSel('personal');
   renderPersonal();
+  renderPbMonthButtons();
 }
 function showPersonal(){
   pbSelDate=null;
@@ -1163,12 +1193,13 @@ function showPersonal(){
   }
   pbBuildNameOptions(curName);
 
-  // 月セレクト構築（ログにある月 + 当月）
+  // 月セレクト構築（ログにある月 + 当月 + 記憶している月）
   const months=new Set();
   months.add(today().slice(0,7));
   logs().forEach(x=>{ if(x.date) months.add(x.date.slice(0,7)); });
   const msel=document.getElementById('pb-month');
   const curM=msel.value || load(PBMONTH_KEY,'');
+  if(curM) months.add(curM);
   msel.innerHTML=[...months].sort().reverse().map(m=>`<option value="${m}" ${m===curM?'selected':''}>${m.replace('-','年')}月</option>`).join('');
   if(!msel.value) msel.value=today().slice(0,7);
 
@@ -1177,6 +1208,7 @@ function showPersonal(){
   document.getElementById('page-personal').classList.add('active');
   syncPageNavSel('personal');
   renderPersonal();
+  renderPbMonthButtons();
   syncPullAll().then(ok=>{ if(ok) renderPersonal(); });
 }
 function pbResetTableHeaders(){
