@@ -170,11 +170,6 @@
   .pb-input .pi-e{ background:var(--early-on); }
   .pb-input .pi-o{ background:var(--over-on); }
   .pb-input .pi-clear{ grid-column:1/3; background:#94a3b8; }
-  .sj-cal-head{ display:grid; grid-template-columns:repeat(7,1fr); text-align:center; font-weight:800; margin-top:10px; color:var(--muted); font-size:13px; }
-  .sj-cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-top:4px; }
-  .sj-cal-cell{ aspect-ratio:1; display:flex; align-items:center; justify-content:center; border:1px solid var(--line); border-radius:8px; cursor:pointer; font-size:14px; background:var(--card); }
-  .sj-cal-cell.on{ background:var(--accent); color:#fff; font-weight:800; }
-  .sj-cal-cell.sj-cal-empty{ border:none; cursor:default; }
 
   /* ── 単価設定ページ ── */
   #page-rates{ display:none; padding:14px 14px 96px; }
@@ -243,7 +238,6 @@
       <select id="pb-month" onchange="pbSelDate=null;renderPersonal()"></select>
     </div>
 
-    <div id="pb-senju-sheet" style="display:none;"></div>
     <div style="display:flex; gap:12px; align-items:flex-start;">
      <div style="flex:0 0 60%; min-width:0;">
       <table class="pb-table" id="pb-daily-table">
@@ -1178,62 +1172,13 @@ function showPersonal(){
   renderPersonal();
   syncPullAll().then(ok=>{ if(ok) renderPersonal(); });
 }
-function renderPbSenjuCalendar(name){
-  const ym=document.getElementById('pb-month').value;
-  const [y,mo]=ym.split('-').map(Number);
-  const days=new Date(y,mo,0).getDate();
-  const firstWd=new Date(y,mo-1,1).getDay();
-  const nameEsc=esc(name).replace(/'/g,"\\'");
-  const workedDates=new Set(logs().filter(x=>x.name===name && x.date && x.date.startsWith(ym) && x.type==='出勤').map(x=>x.date));
-  let cells='';
-  for(let i=0;i<firstWd;i++) cells+=`<div class="sj-cal-cell sj-cal-empty"></div>`;
-  for(let d=1; d<=days; d++){
-    const date=`${ym}-${String(d).padStart(2,'0')}`;
-    const on=workedDates.has(date);
-    cells+=`<div class="sj-cal-cell ${on?'on':''}" onclick="pbSenjuToggleDay('${nameEsc}','${date}')">${d}</div>`;
-  }
-  const workedCount=workedDates.size;
-  const offCount=days-workedCount;
-  document.getElementById('pb-senju-sheet').innerHTML = `
-    <div class="rate-card">
-      <div class="rc-name-row"><div class="rc-name">${esc(name)} — ${mo}月</div></div>
-      <div class="sj-cal-head"><div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div></div>
-      <div class="sj-cal-grid">${cells}</div>
-      <div class="pb-sum-row" style="margin-top:12px;"><span>出勤日数</span><span>${workedCount}日</span></div>
-      <div class="pb-sum-row"><span>休みの日数</span><span>${offCount}日</span></div>
-    </div>`;
-}
-function pbSenjuToggleDay(name,date){
-  const all=logs();
-  const has=all.some(x=>x.name===name && x.date===date && x.type==='出勤');
-  let updated;
-  if(has){
-    updated=all.filter(x=>!(x.name===name && x.date===date && x.type==='出勤'));
-  }else{
-    const n=new Date(); const time=`${pad(n.getHours())}:${pad(n.getMinutes())}`;
-    updated=all.concat([{name, date, type:'出勤', time}]);
-  }
-  set(LK, updated);
-  renderPbSenjuCalendar(name);
-}
 function renderPersonal(){
   const name=document.getElementById('pb-name').value;
   const ym=document.getElementById('pb-month').value;
   if(!name||!ym) return;
   const cat=document.getElementById('pb-cat').value;
-  if(cat==='senju'){
-    document.getElementById('pb-daily-table').style.display='none';
-    document.getElementById('pb-input').classList.remove('active');
-    document.getElementById('pb-summary').style.display='none';
-    document.getElementById('pb-senju-sheet').style.display='block';
-    document.getElementById('pb-line-panel').style.display='none';
-    renderPbSenjuCalendar(name);
-    return;
-  }else{
-    document.getElementById('pb-daily-table').style.display='';
-    document.getElementById('pb-summary').style.display='';
-    document.getElementById('pb-senju-sheet').style.display='none';
-  }
+  document.getElementById('pb-daily-table').style.display='';
+  document.getElementById('pb-summary').style.display='';
   const [y,m]=ym.split('-').map(Number);
   const days=new Date(y,m,0).getDate();
   const myLogs=logs().filter(x=>x.name===name && x.date && x.date.startsWith(ym));
@@ -1285,13 +1230,21 @@ function renderPersonal(){
   }
   document.getElementById('pb-body').innerHTML=rows;
   pbRefreshInput();
-  document.getElementById('pb-summary').innerHTML=`
-    <h3>${name} — ${m}月 集計</h3>
-    <div class="pb-sum-row"><span>出勤日数</span><span>${shukin}日</span></div>
-    <div class="pb-sum-row"><span>早退</span><span>${soutai}回</span></div>
-    <div class="pb-sum-row"><span>早出</span><span>${hayade}h</span></div>
-    <div class="pb-sum-row"><span>残業</span><span>${zangyou}h</span></div>
-  `;
+  if(cat==='senju'){
+    document.getElementById('pb-summary').innerHTML=`
+      <h3>${name} — ${m}月 集計</h3>
+      <div class="pb-sum-row"><span>出勤日数</span><span>${shukin}日</span></div>
+      <div class="pb-sum-row"><span>休みの日数</span><span>${days-shukin}日</span></div>
+    `;
+  }else{
+    document.getElementById('pb-summary').innerHTML=`
+      <h3>${name} — ${m}月 集計</h3>
+      <div class="pb-sum-row"><span>出勤日数</span><span>${shukin}日</span></div>
+      <div class="pb-sum-row"><span>早退</span><span>${soutai}回</span></div>
+      <div class="pb-sum-row"><span>早出</span><span>${hayade}h</span></div>
+      <div class="pb-sum-row"><span>残業</span><span>${zangyou}h</span></div>
+    `;
+  }
   renderLinePanel(name, m, isKyuyo, linePreviewRows);
 }
 
