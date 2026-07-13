@@ -241,10 +241,10 @@
     <div style="display:flex; gap:12px; align-items:flex-start;">
      <div style="flex:0 0 60%; min-width:0;">
       <table class="pb-table" id="pb-daily-table">
-        <colgroup>
+        <colgroup id="pb-colgroup">
           <col class="pb-col-date"><col class="pb-col-wd"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-amt"><col class="pb-col-amt"><col class="pb-col-amt">
         </colgroup>
-        <thead><tr><th>日付</th><th>曜</th><th>出勤</th><th>早退</th><th>早出</th><th>残業</th><th>出勤金額</th><th>時間外</th><th>合計</th></tr></thead>
+        <thead id="pb-thead"><tr><th>日付</th><th>曜</th><th>出勤</th><th>早退</th><th>早出</th><th>残業</th><th>出勤金額</th><th>時間外</th><th>合計</th></tr></thead>
         <tbody id="pb-body"></tbody>
       </table>
       <div class="pb-input" id="pb-input">
@@ -1110,12 +1110,13 @@ renderAllLeftBtns();
 // 個人出勤簿：区分プルダウンの選択を端末に記憶
 const PBCAT_KEY="kinmu_pbcat_v1";
 // 単価区分に応じて氏名プルダウンを絞り込んで構築
+const PB_ALL='__ALL__';
 function pbBuildNameOptions(preferName){
   const cat=document.getElementById('pb-cat').value;
   const list=emps().filter(n=>empCat(n)===cat);
   const sel=document.getElementById('pb-name');
-  sel.innerHTML=list.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
-  if(preferName && list.includes(preferName)) sel.value=preferName;
+  sel.innerHTML=`<option value="${PB_ALL}">全員</option>` + list.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  if(preferName && (preferName===PB_ALL || list.includes(preferName))) sel.value=preferName;
   else sel.value=list[0]||'';
 }
 function pbCatChanged(){
@@ -1172,6 +1173,51 @@ function showPersonal(){
   renderPersonal();
   syncPullAll().then(ok=>{ if(ok) renderPersonal(); });
 }
+function pbResetTableHeaders(){
+  document.getElementById('pb-colgroup').innerHTML =
+    `<col class="pb-col-date"><col class="pb-col-wd"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-mark"><col class="pb-col-amt"><col class="pb-col-amt"><col class="pb-col-amt">`;
+  document.getElementById('pb-thead').innerHTML =
+    `<tr><th>日付</th><th>曜</th><th>出勤</th><th>早退</th><th>早出</th><th>残業</th><th>出勤金額</th><th>時間外</th><th>合計</th></tr>`;
+}
+function renderPersonalAll(cat, ym){
+  const [y,mo]=ym.split('-').map(Number);
+  const days=new Date(y,mo,0).getDate();
+  const allLogs=logs().filter(x=>x.date && x.date.startsWith(ym) && x.type==='出勤');
+  const byDate={};
+  allLogs.forEach(x=>{ (byDate[x.date]=byDate[x.date]||new Set()).add(x.name); });
+  const catNames=emps().filter(n=>empCat(n)===cat);
+  document.getElementById('pb-colgroup').innerHTML =
+    `<col style="width:70px"><col style="width:36px">` + catNames.map(()=>`<col style="width:90px">`).join('');
+  document.getElementById('pb-thead').innerHTML =
+    `<tr><th>日付</th><th>曜</th>${catNames.map(n=>`<th>${esc(n)}</th>`).join('')}</tr>`;
+  let rows='';
+  for(let d=1; d<=days; d++){
+    const date=`${ym}-${String(d).padStart(2,'0')}`;
+    const wd=new Date(date+'T00:00').getDay();
+    const wdStr='日月火水木金土'[wd];
+    const isHol=isHoliday(date);
+    const dayCls = isHol ? 'holiday' : (wd===6 ? 'saturday' : (wd===0 ? 'sunday' : ''));
+    const attendedSet=byDate[date]||new Set();
+    rows+=`<tr class="${dayCls}">
+      <td>${mo}/${d}</td><td>${wdStr}</td>
+      ${catNames.map(n=>`<td class="tag-in" style="cursor:pointer;" onclick="pbAllToggle('${esc(n).replace(/'/g,"\\'")}','${date}')">${attendedSet.has(n)?'○':''}</td>`).join('')}
+    </tr>`;
+  }
+  document.getElementById('pb-body').innerHTML=rows;
+}
+function pbAllToggle(name,date){
+  const all=logs();
+  const has=all.some(x=>x.name===name && x.date===date && x.type==='出勤');
+  let updated;
+  if(has){
+    updated=all.filter(x=>!(x.name===name && x.date===date && x.type==='出勤'));
+  }else{
+    const n=new Date(); const time=`${pad(n.getHours())}:${pad(n.getMinutes())}`;
+    updated=all.concat([{name, date, type:'出勤', time}]);
+  }
+  set(LK, updated);
+  renderPersonal();
+}
 function renderPersonal(){
   const name=document.getElementById('pb-name').value;
   const ym=document.getElementById('pb-month').value;
@@ -1179,6 +1225,14 @@ function renderPersonal(){
   const cat=document.getElementById('pb-cat').value;
   document.getElementById('pb-daily-table').style.display='';
   document.getElementById('pb-summary').style.display='';
+  if(name===PB_ALL){
+    document.getElementById('pb-summary').style.display='none';
+    document.getElementById('pb-line-panel').style.display='none';
+    document.getElementById('pb-input').classList.remove('active');
+    renderPersonalAll(cat, ym);
+    return;
+  }
+  pbResetTableHeaders();
   const [y,m]=ym.split('-').map(Number);
   const days=new Date(y,m,0).getDate();
   const myLogs=logs().filter(x=>x.name===name && x.date && x.date.startsWith(ym));
