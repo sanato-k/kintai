@@ -1269,7 +1269,7 @@ function renderPersonal(){
     const isWknd = isHol || wd===6 || wd===0;
     if(isKyuyo && (hasIn||hasOut||eRec||oRec)){
       if(hasIn) baseAmt += Number((isWknd?kRate.doniti:kRate.heijitsu))||0;
-      if(hasOut) baseAmt -= Number(kRate.sotai)||0;
+      if(hasOut) baseAmt *= 0.5;
       if(eRec) otAmt += (parseFloat(eRec.hours)||0) * (Number(kRate.hayade)||0);
       if(oRec) otAmt += (parseFloat(oRec.hours)||0) * (Number(kRate.hayade)||0);
       baseTxt = fmtNum(baseAmt);
