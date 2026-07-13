@@ -1130,6 +1130,11 @@ function pbBuildNameOptions(preferName){
   const cat=document.getElementById('pb-cat').value;
   const list=emps().filter(n=>empCat(n)===cat);
   const sel=document.getElementById('pb-name');
+  if(cat==='senju'){
+    sel.innerHTML=`<option value="${PB_ALL}">全員</option>`;
+    sel.value=PB_ALL;
+    return;
+  }
   sel.innerHTML=`<option value="${PB_ALL}">全員</option>` + list.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
   if(preferName && (preferName===PB_ALL || list.includes(preferName))) sel.value=preferName;
   else sel.value=list[0]||'';
