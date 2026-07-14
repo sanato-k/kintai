@@ -120,6 +120,14 @@
 
 <script>
 const DK="uriage_days_v1", SK="uriage_sent_v1", WKEY="uriage_workdate_v1";
+const URIAGE_API="https://uriage-api.manasarowaru.workers.dev", URIAGE_API_KEY="uriage-4b7e2f91-c635-4a8d-b0f6-9e1c7d5a2b3f";
+function syncToD1(){
+  const all=days();
+  if(Object.keys(all).length===0) return;
+  fetch(URIAGE_API+"/api/sales/bulk",{method:"POST",
+    headers:{"Content-Type":"application/json","X-Api-Key":URIAGE_API_KEY},
+    body:JSON.stringify({days:all})}).catch(()=>{});
+}
 const $=id=>document.getElementById(id);
 // 内部キー(左)は売上帳の列ラベルに一致。表示名(右)はユーザーの馴染む略称。
 const ITEMS=[
@@ -337,7 +345,7 @@ function sendCSV(){
   const bom="﻿";
   const blob=new Blob([bom+csv],{type:"text/csv;charset=utf-8"});
   const file=new File([blob],fname,{type:"text/csv"});
-  const done=()=>{ markAllSent(); render(); };
+  const done=()=>{ markAllSent(); syncToD1(); render(); };
   if(location.protocol==="http:"){
     fetch("/save",{method:"POST",headers:{"Content-Type":"text/csv;charset=utf-8"},body:bom+csv})
       .then(r=>{ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
