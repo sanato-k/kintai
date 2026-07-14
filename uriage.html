@@ -121,6 +121,32 @@
 <script>
 const DK="uriage_days_v1", SK="uriage_sent_v1", WKEY="uriage_workdate_v1";
 const URIAGE_API="https://uriage-api.manasarowaru.workers.dev", URIAGE_API_KEY="uriage-4b7e2f91-c635-4a8d-b0f6-9e1c7d5a2b3f";
+// ── Square/PayPay 自動取得ON/OFF ──
+const AUTO_KEYS=["クレジットカード","paypay"]; // クレジットカード=Square経由の決済
+const AUTO_STORE_KEY="uriage_auto_v1";
+function autoState(){ return load(AUTO_STORE_KEY,{}); }
+function isAutoOn(k){ return !!autoState()[k]; }
+function toggleAuto(k){
+  const s=autoState(); s[k]=!s[k]; set(AUTO_STORE_KEY,s);
+  render();
+}
+function fetchAutoAmount(key,dateStr){
+  const providerPath = key==="paypay" ? "paypay" : "square";
+  fetch(`${URIAGE_API}/api/${providerPath}/daily?date=${dateStr}`,{headers:{"X-Api-Key":URIAGE_API_KEY}})
+    .then(r=>r.json()).then(j=>{
+      if(workDate()!==dateStr) return;
+      const el=$("f_"+key); if(!el) return;
+      if(j && j.configured && j.amount!=null){
+        el.value=j.amount; el.placeholder="自動取得";
+      } else {
+        el.placeholder="未接続(手入力可)"; el.removeAttribute("readonly");
+      }
+      recalc();
+    }).catch(()=>{
+      const el=$("f_"+key); if(el){ el.placeholder="取得失敗(手入力可)"; el.removeAttribute("readonly"); }
+    });
+}
+
 function syncToD1(){
   const all=days();
   if(Object.keys(all).length===0) return;
@@ -294,10 +320,19 @@ function render(){
   if($("f_メモ")) $("f_メモ").value=(cur.メモ!=null)?cur.メモ:"";
   $("fields").innerHTML=ITEMS.map(([k,label])=>{
     const v=(cur[k]!=null)?cur[k]:"";
+    if(AUTO_KEYS.includes(k)){
+      const on=isAutoOn(k);
+      return `<div class="frow"><span class="lbl">${label}</span>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#5b639a;font-weight:700;white-space:nowrap;">
+          <input type="checkbox" id="auto_${k}" ${on?"checked":""} onchange="toggleAuto('${k}')" style="width:16px;height:16px;">自動
+        </label>
+        <input id="f_${k}" type="number" inputmode="numeric" value="${v}" placeholder="0" oninput="recalc()" ${on?"readonly":""}></div>`;
+    }
     return `<div class="frow"><span class="lbl">${label}</span>
       <input id="f_${k}" type="number" inputmode="numeric" value="${v}" placeholder="0" oninput="recalc()"></div>`;
   }).join("");
   recalc();
+  AUTO_KEYS.forEach(k=>{ if(isAutoOn(k)) fetchAutoAmount(k,w); });
   // 天気・気温が未入力なら、その売上日の天気を自動取得
   if((cur.天気==null||cur.天気==="") && (cur.温度==null||cur.温度==="")){ fetchWeather(w); }
   // このデバイスに保存が無い日は、PC(OneDrive)に既に送信済みのデータが無いか探して反映
