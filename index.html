@@ -441,7 +441,7 @@ const set=(k,v)=>{ localStorage.setItem(k,JSON.stringify(v)); syncPush(k,v); };
 const SYNC_URL="https://kintai-sync.manasarowaru.workers.dev";
 const SYNC_KEY="kintai2026sync";
 const SYNC_KEYS=["kinmu_emps_v1","kinmu_logs_v1","kinmu_memo_v1","kinmu_power_v1","kinmu_sent_v1",
-  "kinmu_rates_v1","kinmu_rates_senju_v1","kinmu_rates_other_v1","kinmu_empcat_v1","kinmu_roster_order_v1","kinmu_amt_override_v1"];
+  "kinmu_rates_v1","kinmu_rates_senju_v1","kinmu_rates_other_v1","kinmu_empcat_v1","kinmu_roster_order_v1","kinmu_amt_override_v1","kinmu_senju_absent_v1"];
 function syncPush(k,v){
   if(!SYNC_KEYS.includes(k)) return;
   fetch(`${SYNC_URL}/set?k=${k}`,{
@@ -547,6 +547,7 @@ function setWork(w){ set(WKEY,w); $("wd").value=w; }
 function manualDate(){ setWork($("wd").value); render(); }
 
 function punch(name,type,hours){
+  if(empCat(name)==='senju' && senjuAbsent(name)) setSenjuAbsent(name,false);
   const n=new Date(); const time=`${pad(n.getHours())}:${pad(n.getMinutes())}`;
   const w=workDate();
   const arr=logs();
@@ -633,10 +634,27 @@ function clearSent(d){ set(SK, load(SK,[]).filter(x=>x!==d)); }
 // 週間チェックの1日分を削除
 function delDay(ev,d){ ev.stopPropagation(); uiConfirm(`${fmtD(d)} の打刻を削除しますか？`, ()=>{ set(LK, logs().filter(x=>x.date!==d)); clearSent(d); render(); }); }
 // 氏名は index で参照（名前に記号が入っても onclick が壊れない）
+const SENJU_ABS_KEY="kinmu_senju_absent_v1";
+function senjuAbsent(n){ const m=load(SENJU_ABS_KEY,{}); return (m[workDate()]||[]).includes(n); }
+function setSenjuAbsent(n,on){
+  const m=load(SENJU_ABS_KEY,{}), w=workDate();
+  let a=(m[w]||[]).filter(x=>x!==n); if(on) a.push(n);
+  if(a.length) m[w]=a; else delete m[w];
+  set(SENJU_ABS_KEY,m);
+}
 function nameTap(i){
   const n=emps()[i]; if(!n) return;
   if(removeMode){ delEmp(n); return; }
   const w=workDate();
+  if(empCat(n)==='senju'){   // 専従者: 氏名の板で 出勤⇔欠席 を切り替え
+    if(senjuAbsent(n)){ setSenjuAbsent(n,false); punch(n,"出勤"); }
+    else{
+      setSenjuAbsent(n,true);
+      set(LK, logs().filter(x=>!(x.date===w && x.name===n)));
+      clearSent(w); render();
+    }
+    return;
+  }
   if(logs().some(x=>x.date===w && x.name===n)){
     // 既に打刻あり → もう一度タップでこの人の当日データを全リセット（色・ボタンも初期化）
     set(LK, logs().filter(x=>!(x.date===w && x.name===n)));
@@ -732,7 +750,7 @@ function render(){
   updateSenjuToggleBtn();
   $("emps").innerHTML=emps().map((name,i)=>{
     if(!senjuVisible && empCat(name)==='senju') return '';
-    const io=(empCat(name)==='senju') ? '出勤' : lastInOut(name);
+    const io=(empCat(name)==='senju') ? (senjuAbsent(name)?null:'出勤') : lastInOut(name);
     const eh=hoursOf(name,"早出"), oh=hoursOf(name,"残業");
     const ncls=removeMode?'name del':('name '+(io?'act':''));
     return `<div class="emp" data-emp="${i}">
@@ -1644,7 +1662,7 @@ function renderRates(){
       <div class="rate-field">
         <label>${label}</label>
         <input type="text" inputmode="decimal" id="r-${idx}-${k}" value="${r[k]!=null?fmtNum(r[k]):''}"
-          onblur="this.value=fmtNum(this.value)"
+          onblur="this.value=fmtNum(this.value);setRate('${nameEsc}','${k}',this.value)"
           ${useEnterKey?`onkeydown="if(event.key==='Enter'){event.preventDefault();setRate('${nameEsc}','${k}',this.value);this.blur();}"`:''}>
       </div>`).join("");
     return `<div class="rate-card">
